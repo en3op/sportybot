@@ -32,6 +32,8 @@ def init_databases():
             user_id INTEGER,
             message_type TEXT,
             content TEXT,
+            sent_count INTEGER DEFAULT 0,
+            sent_date TEXT,
             created_at TEXT DEFAULT (datetime('now'))
         );
     """)

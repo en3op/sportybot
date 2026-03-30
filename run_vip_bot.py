@@ -35,7 +35,7 @@ def main():
     app.add_handler(CommandHandler("listvip", bot.cmd_listvip))
     app.add_handler(CommandHandler("refresh", bot.cmd_refresh))
     app.add_handler(MessageHandler(filters.PHOTO, bot.handle_photo))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bot.handle_message))
+    # Note: handle_message doesn't exist in bot.py, removed
     
     logger.info("VIP bot handlers registered, starting polling...")
     app.run_polling(drop_pending_updates=True, close_loop=False)

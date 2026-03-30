@@ -1114,16 +1114,27 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             for display_name, event in matched_events.items():
                 analysis = analyze_all_markets_full(event)
                 plays = analysis.get("plays", [])
-                if plays:
-                    match_plays[display_name] = plays
+            if plays:
+                match_plays[display_name] = plays
 
         if not match_plays:
             team_list = [t for t, _ in match_pairs] if match_pairs else potential_teams[:8]
             await _safe_edit(progress_msg,
                 f"\u274c Could not match teams to live events.\n\n"
-                f"Extracted: {', '.join(team_list)}\n"
-                f"Try sending your picks as text:\n"
-                f"`Man City vs Arsenal\nLiverpool vs Chelsea`"
+                f"Extracted: {', '.join(team_list)}\n\n"
+                f"These matches may not be available on SportyBet.\n"
+                f"Try matches that are currently available."
+            )
+            return
+
+        # Check if we have enough matches
+        if len(match_plays) < 2:
+            matched = list(match_plays.keys())[0] if match_plays else "Unknown"
+            await _safe_edit(progress_msg,
+                f"\u26a0\ufe0f Only 1 match found: {matched}\n\n"
+                f"I need at least 2 matches to build slip combinations.\n\n"
+                f"Your slip teams: {', '.join([f'{t1} vs {t2}' for t1, t2 in match_pairs])}\n\n"
+                f"These matches may have already started or are not on SportyBet."
             )
             return
 
