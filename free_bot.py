@@ -1092,8 +1092,55 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             )
             return
 
-        # Fetch SportyBet events
-        await _safe_edit(progress_msg, "\u23f3 Fetching live SportyBet odds...")
+        # --- NEW VIP PREDICTION POOL CHECK ---
+        from core.slip_matcher import match_against_pool
+        from core.pool_slip_generator import generate_slips_from_matches, format_slip_telegram
+        from core.pool_manager import get_pool_summary
+
+        pool_handled = False
+        summary = get_pool_summary()
+        
+        # If the pool is populated and we extracted pairs, check pool first
+        if summary.get("active_matches", 0) > 0 and len(match_pairs) >= 1:
+            await _safe_edit(progress_msg, "\u23f3 Analyzing against VIP Prediction Pool...")
+            parsed = [{"home": t1, "away": t2, "raw_line": f"{t1} vs {t2}"} for t1, t2 in match_pairs]
+            match_result = match_against_pool(parsed)
+            matched = match_result["matched"]
+            unmatched = match_result["unmatched"]
+            
+            # Use pool if we matched at least 2 games
+            if len(matched) >= 2:
+                slips = generate_slips_from_matches(matched)
+                
+                msg_parts = []
+                if unmatched:
+                    msg_parts.append("\u26a0\ufe0f Some matches fell back to live odds or were not in VIP pool:")
+                    for u in unmatched:
+                        msg_parts.append(f"  - {u['slip_match']['raw_line']}")
+                    msg_parts.append("")
+                
+                safe_msg = format_slip_telegram(slips["safe_slip"], "SAFE", "LOW RISK")
+                medium_msg = format_slip_telegram(slips["medium_slip"], "MEDIUM", "MEDIUM RISK")
+                risky_msg = format_slip_telegram(slips["risky_slip"], "RISKY", "HIGH RISK")
+                
+                full_msg = "\n".join(msg_parts) if msg_parts else ""
+                await progress_msg.delete()
+                
+                if full_msg:
+                    await update.message.reply_text(full_msg[:4000])
+                    
+                for slip_msg in [safe_msg, medium_msg, risky_msg]:
+                    if slip_msg and "No qualifying" not in slip_msg:
+                        await update.message.reply_text(slip_msg[:4000])
+                
+                pool_handled = True
+                
+        if pool_handled:
+            return
+        # ------------------------------------
+
+        # Fetch SportyBet events (Fallback)
+        await _safe_edit(progress_msg, "\u23f3 Fetching live SportyBet odds (VIP fallback)...")
         events = await fetch_live_events()
         logger.info(f"Fetched {len(events)} SportyBet events")
 
