@@ -436,6 +436,22 @@ def refresh_fixtures():
     return redirect(url_for("fixtures"))
 
 
+@app.route("/schedule/refresh_fotmob")
+def refresh_from_fotmob():
+    import threading
+    from core.weekly_runner import run_weekly_cycle
+    
+    def background_run():
+        try:
+            run_weekly_cycle()
+        except Exception as e:
+            logger.error(f"Error in weekly cycle: {e}")
+            
+    threading.Thread(target=background_run, daemon=True).start()
+    flash("Fetching 7-day schedule in the background. It will appear here once complete (usually takes 1-2 minutes).", "info")
+    return redirect(url_for("schedule"))
+
+
 @app.route("/schedule")
 def schedule():
     """7-day match schedule grouped by date."""
