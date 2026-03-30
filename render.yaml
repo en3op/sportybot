@@ -1,1 +1,16 @@
-web: python render_app.py
+services:
+  - type: web
+    name: sportybot
+    env: docker
+    plan: free
+    region: oregon
+    healthCheckPath: /
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: FREE_BOT_TOKEN
+        sync: false
+      - key: VIP_BOT_TOKEN
+        sync: false
+      - key: TESSERACT_CMD
+        value: tesseract

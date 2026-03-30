@@ -16,6 +16,7 @@ Usage:
 
 import os
 import re
+import shutil
 import logging
 import tempfile
 import asyncio
@@ -52,7 +53,15 @@ from slip_analyzer.analyzer import analyze_slip_enhanced, get_full_analysis, cle
 
 BOT_TOKEN = os.environ.get("FREE_BOT_TOKEN", "8784721708:AAFBp7_YbzpzeNvg-Y7lam_i8w6FhnJByHw")
 PAYSTACK_LINK = os.environ.get("PAYSTACK_LINK", "https://paystack.com/pay/YOUR_PAYMENT_LINK_HERE")
-TESSERACT_CMD = os.environ.get("TESSERACT_CMD", r"C:\Program Files\Tesseract-OCR\tesseract.exe")
+TESSERACT_CMD = os.environ.get("TESSERACT_CMD")
+if not TESSERACT_CMD:
+    # Try common Windows path
+    win_path = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+    if os.path.exists(win_path):
+        TESSERACT_CMD = win_path
+    else:
+        # Fallback for Linux/Docker
+        TESSERACT_CMD = shutil.which("tesseract") or "tesseract"
 
 # =============================================================================
 # LOGGING

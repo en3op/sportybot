@@ -89,21 +89,49 @@ def run_free_bot_process():
     import sys
     subprocess.run([sys.executable, "run_free_bot.py"])
 
+def check_tesseract():
+    """Verify if Tesseract-OCR is installed and accessible."""
+    import shutil
+    path = shutil.which("tesseract")
+    if path:
+        logger.info(f"Tesseract-OCR found at: {path}")
+        return True
+    else:
+        # Check standard Windows path
+        if os.path.exists(r"C:\Program Files\Tesseract-OCR\tesseract.exe"):
+            logger.info("Tesseract-OCR found at standard Windows path")
+            return True
+        logger.warning("Tesseract-OCR NOT FOUND. Free Bot OCR will fail.")
+        return False
+
 if __name__ == "__main__":
     # Initialize databases first
     init_databases()
     
+    # Check dependencies
+    check_tesseract()
+    
     # Start bots as separate processes
-    vip_process = multiprocessing.Process(target=run_vip_bot_process, daemon=True)
-    free_process = multiprocessing.Process(target=run_free_bot_process, daemon=True)
+    logger.info("Starting bot worker processes...")
+    vip_process = multiprocessing.Process(target=run_vip_bot_process, name="VIP-Bot", daemon=True)
+    free_process = multiprocessing.Process(target=run_free_bot_process, name="Free-Bot", daemon=True)
     
     vip_process.start()
     free_process.start()
     
-    logger.info("Both bot processes started")
+    logger.info(f"Bots started! VIP-Bot(PID:{vip_process.pid}), Free-Bot(PID:{free_process.pid})")
     
     # Run Flask app (main process)
-    from app import app
-    port = int(os.environ.get("PORT", 5000))
-    logger.info(f"Starting Flask dashboard on port {port}")
-    app.run(host="0.0.0.0", port=port, debug=False)
+    try:
+        from app import app
+        port = int(os.environ.get("PORT", 5000))
+        logger.info(f"Starting Flask dashboard on port {port}")
+        app.run(host="0.0.0.0", port=port, debug=False)
+    except Exception as e:
+        logger.error(f"Flask application failed: {e}")
+    finally:
+        logger.info("Shutting down orchestrator...")
+        if vip_process.is_alive():
+            vip_process.terminate()
+        if free_process.is_alive():
+            free_process.terminate()
