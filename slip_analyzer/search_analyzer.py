@@ -47,7 +47,7 @@ def call_nvidia_ai(prompt: str, max_tokens: int = 1000) -> Optional[str]:
     client = get_nvidia_client()
     if not client:
         return None
-    
+
     try:
         response = client.chat.completions.create(
             model=NVIDIA_MODEL,
@@ -59,6 +59,179 @@ def call_nvidia_ai(prompt: str, max_tokens: int = 1000) -> Optional[str]:
     except Exception as e:
         logger.error(f"NVIDIA API call failed: {e}")
         return None
+
+
+# ── CACHED SEARCH WITH RETRY ────────────────────────────────────────────────
+
+def search_match_with_retry(home: str, away: str, max_retries: int = 3) -> dict:
+    """
+    Search for match context with caching and retry logic.
+    
+    Returns:
+        dict with: tier, form_home, form_away, search_context, verdict, etc.
+    """
+    from .match_search_cache import get_cache
+    from .tier_classifier import classify_match_tier
+    
+    cache = get_cache()
+    
+    # Check cache first
+    cached = cache.get(home, away)
+    if cached:
+        return cached
+    
+    # Search with retry
+    search_context = ""
+    for attempt in range(max_retries):
+        try:
+            search_context = search_match_context(home, away)
+            if search_context and "failed" not in search_context.lower():
+                break
+        except Exception as e:
+            logger.warning(f"Search attempt {attempt+1} failed for {home} vs {away}: {e}")
+            if attempt < max_retries - 1:
+                time.sleep(2)
+    
+    # Extract form data from search context
+    form_home, form_away = _extract_form_from_context(search_context)
+    
+    # Classify tier (will use odds data separately)
+    tier = "C"  # Default, will be refined with odds
+    
+    # Determine verdict based on search context
+    verdict = _determine_verdict(search_context, form_home, form_away)
+    
+    # Build result
+    result = {
+        "home_team": home,
+        "away_team": away,
+        "tier": tier,
+        "form_home": form_home,
+        "form_away": form_away,
+        "position_home": 0,
+        "position_away": 0,
+        "goals_home": 0.0,
+        "goals_away": 0.0,
+        "search_context": search_context[:500] if search_context else "",
+        "analysis_summary": _summarize_context(search_context),
+        "verdict": verdict,
+        "source": "search"
+    }
+    
+    # Cache the result
+    cache.set(home, away, result)
+    
+    return result
+
+
+def search_matches_batch(matches: list, progress_callback=None) -> dict:
+    """
+    Search multiple matches sequentially with progress reporting.
+    
+    Args:
+        matches: List of dicts with 'home' and 'away' team names
+        progress_callback: Optional callback(current, total, match_key)
+    
+    Returns:
+        dict keyed by "home vs away" with search results
+    """
+    results = {}
+    total = len(matches)
+    
+    for idx, match in enumerate(matches):
+        home = match.get("home", match.get("home_team", ""))
+        away = match.get("away", match.get("away_team", ""))
+        
+        if not home or not away:
+            continue
+        
+        match_key = f"{home} vs {away}"
+        
+        # Report progress
+        if progress_callback:
+            progress_callback(idx + 1, total, match_key)
+        
+        # Search with retry
+        result = search_match_with_retry(home, away)
+        results[match_key] = result
+        
+        # Rate limiting
+        if idx < total - 1:
+            time.sleep(1)
+    
+    return results
+
+
+def _extract_form_from_context(context: str) -> tuple:
+    """Extract form strings from search context."""
+    import re
+    
+    form_home = ""
+    form_away = ""
+    
+    if not context:
+        return form_home, form_away
+    
+    # Look for form patterns like "WWLDW" or "W D L W W"
+    form_pattern = re.compile(r'\b[WDL]{3,5}\b')
+    forms = form_pattern.findall(context.upper())
+    
+    if len(forms) >= 2:
+        form_home = forms[0]
+        form_away = forms[1]
+    elif len(forms) == 1:
+        form_home = forms[0]
+    
+    return form_home, form_away
+
+
+def _determine_verdict(context: str, form_home: str, form_away: str) -> str:
+    """Determine KEEP/RISKY/DROP verdict from context."""
+    if not context or "failed" in context.lower():
+        return "RISKY"
+    
+    context_lower = context.lower()
+    
+    # Positive indicators
+    positive = ["win", "favorite", "strong", "good form", "unbeaten", "dominant"]
+    # Negative indicators
+    negative = ["loss", "lose", "poor", "struggling", "injured", "suspend"]
+    
+    pos_count = sum(1 for p in positive if p in context_lower)
+    neg_count = sum(1 for n in negative if n in context_lower)
+    
+    # Form check
+    if form_home:
+        home_wins = form_home.count("W")
+        if home_wins >= 3:
+            pos_count += 2
+        elif home_wins <= 1:
+            neg_count += 1
+    
+    if pos_count >= 2 and neg_count == 0:
+        return "KEEP"
+    elif neg_count >= 2:
+        return "DROP"
+    else:
+        return "RISKY"
+
+
+def _summarize_context(context: str) -> str:
+    """Create a brief summary of search context."""
+    if not context:
+        return "No data found"
+    
+    # Extract key phrases
+    lines = context.split("\n")
+    summary_parts = []
+    
+    for line in lines[:3]:
+        if len(line) > 10 and "source" not in line.lower():
+            # Truncate long lines
+            summary = line[:80] + "..." if len(line) > 80 else line
+            summary_parts.append(summary)
+    
+    return " | ".join(summary_parts[:2]) if summary_parts else "Limited data"
 
 # ── PROMPT 1: EXTRACTION ────────────────────────────────────────────────────
 

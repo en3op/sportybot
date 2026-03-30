@@ -114,6 +114,302 @@ def _high_criteria(plays: list[dict]) -> dict | None:
     return pool[0]
 
 
+# =============================================================================
+# NEW: Target-odds-based criteria for 2-3x, 5-7x, 9-12x slip tiers
+# =============================================================================
+
+# Target combined odds per tier
+SAFE_TARGET_ODDS = (2.0, 3.5)      # 2-3x combined
+MODERATE_TARGET_ODDS = (4.5, 8.0)  # 5-7x combined  
+HIGH_TARGET_ODDS = (8.0, 15.0)     # 9-12x combined
+
+# Preferred markets per tier
+SAFE_MARKETS = ["Handicap", "Double Chance", "Goals", "DNB"]  # Safest markets
+MODERATE_MARKETS = ["1X2", "BTTS", "Goals"]                    # Balanced markets
+HIGH_MARKETS = ["1X2"]                                          # Straight results for max odds
+
+
+def _safe_criteria_target(plays: list[dict], current_odds: float = 1.0, target_min: float = 2.0, target_max: float = 3.5) -> dict | None:
+    """
+    Pick a play that contributes to SAFE target odds (2-3x combined).
+    
+    Prefers: Handicap, Double Chance, Over 1.5, DNB
+    Target: Each pick ~1.15-1.40 odds
+    """
+    # Preferred odds range for safe picks
+    min_odds = max(1.10, target_min / max(current_odds, 1.0) ** 0.5)
+    max_odds = min(1.80, target_max / max(current_odds, 1.0))
+    
+    # Filter by odds range
+    eligible = [p for p in plays if min_odds <= p["odds"] <= max_odds]
+    
+    if not eligible:
+        # Fallback: lowest odds
+        eligible = sorted(plays, key=lambda p: p["odds"])
+        return eligible[0] if eligible else None
+    
+    # Prefer safe markets
+    preferred = [p for p in eligible if p.get("market") in SAFE_MARKETS]
+    pool = preferred if preferred else eligible
+    
+    # Sort by implied probability (highest = safest)
+    pool.sort(key=lambda p: p.get("implied", 0), reverse=True)
+    
+    return pool[0]
+
+
+def _moderate_criteria_target(plays: list[dict], current_odds: float = 1.0, target_min: float = 4.5, target_max: float = 8.0) -> dict | None:
+    """
+    Pick a play that contributes to MODERATE target odds (5-7x combined).
+    
+    Prefers: 1X2 favorites, BTTS, Over 2.5
+    Target: Each pick ~1.50-2.50 odds
+    """
+    # Calculate odds range needed
+    min_odds = max(1.30, target_min / max(current_odds, 1.0) ** 0.33)
+    max_odds = min(3.00, target_max / max(current_odds, 1.0))
+    
+    # Filter by odds range
+    eligible = [p for p in plays if min_odds <= p["odds"] <= max_odds]
+    
+    if not eligible:
+        # Fallback: expand range
+        eligible = [p for p in plays if 1.20 <= p["odds"] <= 3.50]
+        if not eligible:
+            eligible = sorted(plays, key=lambda p: p["odds"])
+            return eligible[0] if eligible else None
+    
+    # Prefer moderate markets
+    preferred = [p for p in eligible if p.get("market") in MODERATE_MARKETS]
+    pool = preferred if preferred else eligible
+    
+    # Sort by score (best value)
+    pool.sort(key=lambda p: p.get("score", 0), reverse=True)
+    
+    return pool[0]
+
+
+def _high_criteria_target(plays: list[dict], current_odds: float = 1.0, target_min: float = 8.0, target_max: float = 15.0) -> dict | None:
+    """
+    Pick a play that contributes to HIGH target odds (9-12x combined).
+    
+    Prefers: 1X2 underdogs, draws, away wins
+    Target: Each pick ~2.00-5.00 odds
+    """
+    # Calculate odds range needed
+    min_odds = max(1.80, target_min / max(current_odds, 1.0) ** 0.33)
+    max_odds = min(6.00, target_max / max(current_odds, 1.0))
+    
+    # Filter by odds range
+    eligible = [p for p in plays if min_odds <= p["odds"] <= max_odds]
+    
+    if not eligible:
+        # Fallback: highest odds available
+        eligible = sorted(plays, key=lambda p: p["odds"], reverse=True)
+        return eligible[0] if eligible else None
+    
+    # Prefer 1X2 straight results (away/draw)
+    preferred = [p for p in eligible if p.get("market") == "1X2"]
+    
+    # Further prefer away and draw (higher odds)
+    underdog = [p for p in preferred if "Away" in p.get("pick", "") or "Draw" in p.get("pick", "")]
+    pool = underdog if underdog else (preferred if preferred else eligible)
+    
+    # Sort by odds (highest first)
+    pool.sort(key=lambda p: p["odds"], reverse=True)
+    
+    return pool[0]
+
+
+def build_three_slips_target_odds(match_plays: dict[str, list[dict]], match_tiers: dict = None) -> list:
+    """
+    Build SAFE, MODERATE, HIGH slips targeting specific combined odds.
+    
+    SAFE: 2-3x combined (safest markets)
+    MODERATE: 5-7x combined (balanced value)
+    HIGH: 9-12x combined (high risk/reward)
+    
+    Each tier picks DIFFERENT markets from the same matches.
+    
+    Args:
+        match_plays: {match_key: [plays]} from SportyBet API
+        match_tiers: Optional {match_key: tier} from classification
+    
+    Returns:
+        List of 3 ConstructedSlip objects
+    """
+    if not match_plays:
+        return []
+    
+    tier_configs = [
+        ("SAFE", "🔒", SAFE_TARGET_ODDS, _safe_criteria_target, "3-5%", "Maximum safety — safest markets"),
+        ("MODERATE", "⚖️", MODERATE_TARGET_ODDS, _moderate_criteria_target, "2-3%", "Best value — balanced risk"),
+        ("HIGH", "🚀", HIGH_TARGET_ODDS, _high_criteria_target, "1%", "High reward — aggressive picks"),
+    ]
+    
+    slips = []
+    
+    for name, emoji, target_range, criteria_fn, bankroll, philosophy in tier_configs:
+        slip = _build_tier_target_odds(
+            name, emoji, match_plays, criteria_fn, target_range,
+            bankroll, philosophy, match_tiers
+        )
+        if slip:
+            slips.append(slip)
+    
+    return slips
+
+
+def _build_tier_target_odds(
+    name: str,
+    emoji: str,
+    match_plays: dict[str, list[dict]],
+    criteria_fn,
+    target_range: tuple,
+    bankroll: str,
+    philosophy: str,
+    match_tiers: dict = None
+) -> 'ConstructedSlip | None':
+    """
+    Build a single slip tier targeting specific combined odds.
+    Picks ONE market per match, different per tier.
+    """
+    selected = []
+    current_odds = 1.0
+    target_min, target_max = target_range
+    match_keys_used = set()
+    
+    # Sort matches by tier (S/A/B/C) if available, prioritize higher tiers
+    match_keys = list(match_plays.keys())
+    if match_tiers:
+        tier_order = {"S": 0, "A": 1, "B": 2, "C": 3}
+        match_keys.sort(key=lambda k: tier_order.get(match_tiers.get(k, "C"), 3))
+    
+    for match_key in match_keys:
+        plays = match_plays.get(match_key, [])
+        if not plays or match_key in match_keys_used:
+            continue
+        
+        # Check if we've reached max picks or exceeded target
+        if len(selected) >= MAX_PICKS_PER_SLIP:
+            break
+        
+        # Stop adding picks if we've reached target
+        if current_odds >= target_max:
+            break
+        
+        # Pick using target-aware criteria
+        pick = criteria_fn(plays, current_odds, target_min, target_max)
+        
+        if pick:
+            selected.append((match_key, pick))
+            current_odds *= pick["odds"]
+            match_keys_used.add(match_key)
+    
+    if len(selected) < 2:
+        return None
+    
+    # Build slip picks
+    slip_picks = []
+    for match_key, play in selected:
+        implied = play.get("implied", 0)
+        tier = match_tiers.get(match_key, "C") if match_tiers else "C"
+        
+        slip_picks.append(SlipPick(
+            match_name=match_key,
+            bet_type=play.get("pick_short", ""),
+            bet_label=play.get("pick", ""),
+            odds=play["odds"],
+            consistency_score=int(implied),
+            base_prob=implied,
+            penalties=[],
+            bonuses=[f"Tier {tier}"],
+            reason=_generate_target_reason(play, tier, name),
+        ))
+    
+    # Calculate totals
+    total_odds = functools.reduce(lambda x, y: x * y, [p.odds for p in slip_picks], 1.0)
+    raw_prob = functools.reduce(lambda x, y: x * y, [min(p.base_prob / 100, 0.99) for p in slip_picks], 1.0)
+    win_prob = raw_prob * CORRELATION_ADJUSTMENT * 100
+    
+    # Risk stars
+    avg_implied = sum(p.base_prob for p in slip_picks) / len(slip_picks)
+    if avg_implied >= 70:
+        risk_stars = 1
+    elif avg_implied >= 55:
+        risk_stars = 2
+    elif avg_implied >= 40:
+        risk_stars = 3
+    elif avg_implied >= 30:
+        risk_stars = 4
+    else:
+        risk_stars = 5
+    
+    weakest = min(slip_picks, key=lambda p: p.base_prob)
+    key_risk = f"Weakest: {weakest.match_name} ({weakest.base_prob:.0f}%)"
+    
+    pro_tip = _generate_pro_tip(name, len(slip_picks), total_odds, win_prob)
+    
+    return ConstructedSlip(
+        name=name,
+        emoji=emoji,
+        picks=slip_picks,
+        total_odds=round(total_odds, 2),
+        win_probability=round(win_prob, 1),
+        risk_stars=risk_stars,
+        bankroll_pct=bankroll,
+        philosophy=philosophy,
+        key_risk=key_risk,
+        pro_tip=pro_tip,
+    )
+
+
+def _generate_target_reason(play: dict, tier: str, slip_name: str) -> str:
+    """Generate reason for a target-odds pick."""
+    implied = play.get("implied", 0)
+    odds = play.get("odds", 0)
+    market = play.get("market", "")
+    
+    parts = []
+    
+    if slip_name == "SAFE":
+        if implied >= 80:
+            parts.append(f"Very safe ({implied:.0f}% implied)")
+        elif implied >= 70:
+            parts.append(f"High confidence ({implied:.0f}%)")
+        else:
+            parts.append(f"Solid pick ({implied:.0f}%)")
+        
+        if market == "Handicap":
+            parts.append("HCP coverage")
+        elif market == "Double Chance":
+            parts.append("covers 2 outcomes")
+        elif "Over 1.5" in play.get("pick", ""):
+            parts.append("low line")
+    
+    elif slip_name == "MODERATE":
+        if implied >= 50:
+            parts.append(f"Good value ({implied:.0f}% @ {odds:.2f})")
+        else:
+            parts.append(f"Balanced risk ({implied:.0f}% @ {odds:.2f})")
+        
+        if market == "1X2":
+            parts.append("straight result")
+        elif market == "BTTS":
+            parts.append("scoring form")
+    
+    else:  # HIGH
+        parts.append(f"High odds play ({odds:.2f}x)")
+        if market == "1X2":
+            parts.append("underdog value")
+    
+    tier_desc = {"S": "Premium", "A": "Quality", "B": "Standard", "C": "Risky"}.get(tier, "")
+    if tier_desc:
+        parts.append(f"[{tier}]")
+    
+    return " | ".join(parts)
+
+
 def _build_tier_from_events(
     name: str,
     emoji: str,
