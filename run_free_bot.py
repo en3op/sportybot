@@ -1,13 +1,12 @@
 """
-Free Bot Runner for PythonAnywhere
-Run this as a scheduled task (every hour, but it will keep running)
+Free Bot Runner for Render.com
 """
 
 import os
 import sys
 import logging
+import asyncio
 
-# Set up path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 logging.basicConfig(
@@ -20,7 +19,6 @@ logger = logging.getLogger(__name__)
 def main():
     logger.info("Starting Free bot...")
     
-    # Import and configure bot
     from telegram.ext import Application, CommandHandler, MessageHandler, filters
     import free_bot
     
@@ -28,12 +26,15 @@ def main():
     
     app = Application.builder().token(token).build()
     
-    # Add handlers
+    # Add handlers - only functions that exist in free_bot.py
     app.add_handler(CommandHandler("start", free_bot.cmd_start))
     app.add_handler(CommandHandler("help", free_bot.cmd_help))
-    app.add_handler(CommandHandler("vip", free_bot.cmd_vip))
+    app.add_handler(CommandHandler("analyze", free_bot.cmd_analyze))
+    app.add_handler(CommandHandler("pool", free_bot.cmd_pool))
+    app.add_handler(CommandHandler("scan", free_bot.cmd_scan))
+    app.add_handler(CommandHandler("search", free_bot.cmd_search))
+    app.add_handler(CommandHandler("full", free_bot.cmd_full))
     app.add_handler(MessageHandler(filters.PHOTO, free_bot.handle_photo))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, free_bot.handle_message))
     
     logger.info("Free bot handlers registered, starting polling...")
     app.run_polling(drop_pending_updates=True, close_loop=False)

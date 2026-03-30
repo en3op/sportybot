@@ -7,6 +7,7 @@ import os
 import threading
 import logging
 import sqlite3
+import asyncio
 
 logging.basicConfig(
     level=logging.INFO,
@@ -78,22 +79,36 @@ def init_databases():
     logger.info("prediction_pool.db initialized")
 
 def run_vip_bot():
-    """Run VIP bot in background thread."""
+    """Run VIP bot in background thread with its own event loop."""
     try:
         logger.info("Starting VIP bot thread...")
+        # Create new event loop for this thread
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
         import run_vip_bot
         run_vip_bot.main()
     except Exception as e:
         logger.error(f"VIP bot error: {e}")
+    finally:
+        if loop.is_running():
+            loop.close()
 
 def run_free_bot():
-    """Run Free bot in background thread."""
+    """Run Free bot in background thread with its own event loop."""
     try:
         logger.info("Starting Free bot thread...")
+        # Create new event loop for this thread
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
         import run_free_bot
         run_free_bot.main()
     except Exception as e:
         logger.error(f"Free bot error: {e}")
+    finally:
+        if loop.is_running():
+            loop.close()
 
 def start_bots():
     """Start both bots in background threads."""
