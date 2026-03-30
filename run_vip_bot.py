@@ -1,13 +1,11 @@
 """
-VIP Bot Runner for PythonAnywhere
-Run this as a scheduled task (every hour, but it will keep running)
+VIP Bot Runner for Render.com
 """
 
 import os
 import sys
 import logging
 
-# Set up path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 logging.basicConfig(
@@ -20,7 +18,6 @@ logger = logging.getLogger(__name__)
 def main():
     logger.info("Starting VIP bot...")
     
-    # Import and configure bot
     from telegram.ext import Application, CommandHandler, MessageHandler, filters
     import bot
     
@@ -28,18 +25,15 @@ def main():
     
     app = Application.builder().token(token).build()
     
-    # Add handlers
+    # Add handlers - only functions that exist in bot.py
     app.add_handler(CommandHandler("start", bot.cmd_start))
-    app.add_handler(CommandHandler("help", bot.cmd_help))
     app.add_handler(CommandHandler("safe", bot.cmd_safe))
     app.add_handler(CommandHandler("optimize", bot.cmd_optimize))
-    app.add_handler(CommandHandler("vip", bot.cmd_vip))
-    app.add_handler(CommandHandler("admin", bot.cmd_admin))
+    app.add_handler(CommandHandler("status", bot.cmd_status))
     app.add_handler(CommandHandler("addvip", bot.cmd_addvip))
     app.add_handler(CommandHandler("removevip", bot.cmd_removevip))
     app.add_handler(CommandHandler("listvip", bot.cmd_listvip))
-    app.add_handler(CommandHandler("broadcast", bot.cmd_broadcast))
-    app.add_handler(CommandHandler("test", bot.cmd_test))
+    app.add_handler(CommandHandler("refresh", bot.cmd_refresh))
     app.add_handler(MessageHandler(filters.PHOTO, bot.handle_photo))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bot.handle_message))
     

@@ -182,7 +182,19 @@ def analyze_slip_enhanced(
         slips = build_three_slips_from_events(match_plays)
     
     if not slips:
-        return "\u26a0\ufe0f Could not construct valid slips.", None
+        # Provide helpful error message
+        if len(match_plays) < 2:
+            return (
+                "\u26a0\ufe0f Only 1 match found.\n\n"
+                f"Matched: {list(match_plays.keys())[0] if match_plays else 'None'}\n\n"
+                "I need at least 2 matches to build slip combinations.\n"
+                "Try sending a clearer photo with more games visible."
+            ), None
+        return (
+            "\u26a0\ufe0f Could not construct valid slips.\n\n"
+            f"Matched {len(match_plays)} game(s) but couldn't build combinations.\n"
+            "Try sending a clearer screenshot with visible team names."
+        ), None
     
     # Step 4: Format concise message
     message = format_concise_slip_message(
