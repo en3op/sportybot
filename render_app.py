@@ -1,13 +1,12 @@
 """
 Render.com deployment entry point
-Runs Flask dashboard (web) and both bots in background threads
+Runs Flask dashboard (web) and uses multiprocessing for bots
 """
 
 import os
-import threading
 import logging
 import sqlite3
-import asyncio
+import multiprocessing
 
 logging.basicConfig(
     level=logging.INFO,
@@ -17,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 def init_databases():
     """Initialize all required databases."""
-    # VIP users database
     vip_conn = sqlite3.connect("vip_users.db")
     vip_conn.executescript("""
         CREATE TABLE IF NOT EXISTS vip_users (
@@ -42,7 +40,6 @@ def init_databases():
     vip_conn.close()
     logger.info("vip_users.db initialized")
     
-    # Prediction pool database
     pool_conn = sqlite3.connect("prediction_pool.db")
     pool_conn.executescript("""
         CREATE TABLE IF NOT EXISTS matches (
@@ -78,56 +75,34 @@ def init_databases():
     pool_conn.close()
     logger.info("prediction_pool.db initialized")
 
-def run_vip_bot():
-    """Run VIP bot in background thread with its own event loop."""
-    try:
-        logger.info("Starting VIP bot thread...")
-        # Create new event loop for this thread
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        
-        import run_vip_bot
-        run_vip_bot.main()
-    except Exception as e:
-        logger.error(f"VIP bot error: {e}")
-    finally:
-        if loop.is_running():
-            loop.close()
+def run_vip_bot_process():
+    """Run VIP bot in separate process."""
+    logger.info("VIP bot process starting...")
+    import subprocess
+    import sys
+    subprocess.run([sys.executable, "run_vip_bot.py"])
 
-def run_free_bot():
-    """Run Free bot in background thread with its own event loop."""
-    try:
-        logger.info("Starting Free bot thread...")
-        # Create new event loop for this thread
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        
-        import run_free_bot
-        run_free_bot.main()
-    except Exception as e:
-        logger.error(f"Free bot error: {e}")
-    finally:
-        if loop.is_running():
-            loop.close()
-
-def start_bots():
-    """Start both bots in background threads."""
-    vip_thread = threading.Thread(target=run_vip_bot, daemon=True)
-    vip_thread.start()
-    
-    free_thread = threading.Thread(target=run_free_bot, daemon=True)
-    free_thread.start()
-    
-    logger.info("Both bots started in background threads")
+def run_free_bot_process():
+    """Run Free bot in separate process."""
+    logger.info("Free bot process starting...")
+    import subprocess
+    import sys
+    subprocess.run([sys.executable, "run_free_bot.py"])
 
 if __name__ == "__main__":
     # Initialize databases first
     init_databases()
     
-    # Start bots in background
-    start_bots()
+    # Start bots as separate processes
+    vip_process = multiprocessing.Process(target=run_vip_bot_process, daemon=True)
+    free_process = multiprocessing.Process(target=run_free_bot_process, daemon=True)
     
-    # Run Flask app (this is the main process)
+    vip_process.start()
+    free_process.start()
+    
+    logger.info("Both bot processes started")
+    
+    # Run Flask app (main process)
     from app import app
     port = int(os.environ.get("PORT", 5000))
     logger.info(f"Starting Flask dashboard on port {port}")
