@@ -1008,10 +1008,8 @@ async def handle_analyze_text(update: Update, context: ContextTypes.DEFAULT_TYPE
     vs_count = len(re.findall(r'\bvs?\.?\b', text, re.IGNORECASE))
 
     if vs_count >= 1 and len(text) > 10:
-        # Route to pool slip scanner
-        handled = await handle_pool_slip_text(update, context)
-        if handled:
-            return
+        # Automatically treat as an analysis request
+        context.user_data["awaiting_analyze"] = True
 
     # Original /analyze flow
     if not context.user_data.get("awaiting_analyze"):
@@ -1092,55 +1090,8 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             )
             return
 
-        # --- NEW VIP PREDICTION POOL CHECK ---
-        from core.slip_matcher import match_against_pool
-        from core.pool_slip_generator import generate_slips_from_matches, format_slip_telegram
-        from core.pool_manager import get_pool_summary
-
-        pool_handled = False
-        summary = get_pool_summary()
-        
-        # If the pool is populated and we extracted pairs, check pool first
-        if summary.get("active_matches", 0) > 0 and len(match_pairs) >= 1:
-            await _safe_edit(progress_msg, "\u23f3 Analyzing against VIP Prediction Pool...")
-            parsed = [{"home": t1, "away": t2, "raw_line": f"{t1} vs {t2}"} for t1, t2 in match_pairs]
-            match_result = match_against_pool(parsed)
-            matched = match_result["matched"]
-            unmatched = match_result["unmatched"]
-            
-            # Use pool if we matched at least 2 games
-            if len(matched) >= 2:
-                slips = generate_slips_from_matches(matched)
-                
-                msg_parts = []
-                if unmatched:
-                    msg_parts.append("\u26a0\ufe0f Some matches fell back to live odds or were not in VIP pool:")
-                    for u in unmatched:
-                        msg_parts.append(f"  - {u['slip_match']['raw_line']}")
-                    msg_parts.append("")
-                
-                safe_msg = format_slip_telegram(slips["safe_slip"], "SAFE", "LOW RISK")
-                medium_msg = format_slip_telegram(slips["medium_slip"], "MEDIUM", "MEDIUM RISK")
-                risky_msg = format_slip_telegram(slips["risky_slip"], "RISKY", "HIGH RISK")
-                
-                full_msg = "\n".join(msg_parts) if msg_parts else ""
-                await progress_msg.delete()
-                
-                if full_msg:
-                    await update.message.reply_text(full_msg[:4000])
-                    
-                for slip_msg in [safe_msg, medium_msg, risky_msg]:
-                    if slip_msg and "No qualifying" not in slip_msg:
-                        await update.message.reply_text(slip_msg[:4000])
-                
-                pool_handled = True
-                
-        if pool_handled:
-            return
-        # ------------------------------------
-
-        # Fetch SportyBet events (Fallback)
-        await _safe_edit(progress_msg, "\u23f3 Fetching live SportyBet odds (VIP fallback)...")
+        # Fetch SportyBet events
+        await _safe_edit(progress_msg, "\u23f3 Fetching live SportyBet odds...")
         events = await fetch_live_events()
         logger.info(f"Fetched {len(events)} SportyBet events")
 
@@ -1241,66 +1192,8 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 
 # =============================================================================
-# POOL SLIP SCANNER
+# WEB SEARCH SCRAPER OVERRIDES (If any)
 # =============================================================================
-
-
-async def cmd_pool(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /pool — show current prediction pool summary."""
-    try:
-        from core.pool_manager import get_pool_summary, get_top_predictions
-
-        summary = get_pool_summary()
-        top = get_top_predictions(min_confidence=80, max_results=5)
-
-        msg = [
-            "PREDICTION POOL",
-            "=" * 24,
-            f"Active matches: {summary['active_matches']}",
-            f"Total predictions: {summary['total_predictions']}",
-            f"Today's matches: {summary['today_matches']}",
-            f"Avg confidence: {summary['avg_confidence']}",
-            f"Overall accuracy: {summary['overall_accuracy']}%",
-            "",
-        ]
-
-        if top:
-            msg.append("TOP PICKS:")
-            for i, p in enumerate(top[:5], 1):
-                msg.append(f"  {i}. {p['home_team']} vs {p['away_team']}")
-                msg.append(f"     {p['market']}: {p['pick']} @ {p['odds']:.2f}")
-                msg.append(f"     Confidence: {p['confidence']:.0f} | {p['risk_tier']}")
-                msg.append("")
-
-        msg.append("Send your slip (text or photo) to get optimized picks!")
-
-        await update.message.reply_text("\n".join(msg))
-
-    except Exception as e:
-        logger.error(f"Pool command error: {e}")
-        await update.message.reply_text("Pool data unavailable. Run /scan first.")
-
-
-async def cmd_scan(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /scan — trigger weekly pool population."""
-    progress = await update.message.reply_text("Scanning matches and populating prediction pool...")
-
-    try:
-        from core.weekly_runner import run_weekly_cycle
-        result = run_weekly_cycle()
-
-        await progress.edit_text(
-            f"Pool populated!\n\n"
-            f"Events scraped: {result.get('events', 0)}\n"
-            f"Qualified matches: {result.get('qualified', 0)}\n"
-            f"Predictions stored: {result.get('predictions_stored', 0)}\n"
-            f"Time: {result.get('duration', 0)}s\n\n"
-            f"Send your slip to get optimized picks!"
-        )
-
-    except Exception as e:
-        logger.error(f"Scan error: {e}")
-        await progress.edit_text(f"Scan failed: {e}")
 
 
 async def cmd_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1414,103 +1307,6 @@ async def handle_search_photo(update: Update, context: ContextTypes.DEFAULT_TYPE
             os.remove(tmp_path)
 
 
-async def handle_pool_slip_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle text that looks like a slip submission (team vs team patterns)."""
-    text = update.message.text or ""
-    import re
-
-    # Check if text contains "vs" or "v" patterns (slip submission)
-    vs_count = len(re.findall(r'\bvs?\.?\b', text, re.IGNORECASE))
-
-    if vs_count >= 1 and len(text) > 10:
-        # This looks like a slip submission
-        progress = await update.message.reply_text("Analyzing your slip against the prediction pool...")
-
-        try:
-            from core.slip_matcher import parse_slip_text, match_against_pool
-            from core.pool_slip_generator import generate_slips_from_matches, format_slip_telegram
-            from core.pool_manager import log_user_slip, get_pool_summary
-
-            # Parse the slip
-            parsed = parse_slip_text(text)
-
-            if not parsed:
-                await progress.edit_text("Could not parse any matches from your text. Try format: 'Team A vs Team B'")
-                return
-
-            # Check if pool has data
-            summary = get_pool_summary()
-            if summary["active_matches"] == 0:
-                await progress.edit_text(
-                    "Prediction pool is empty. An admin needs to run /scan first.\n"
-                    "Try again later or use /pool to check status."
-                )
-                return
-
-            # Match against pool
-            match_result = match_against_pool(parsed)
-            matched = match_result["matched"]
-            unmatched = match_result["unmatched"]
-
-            if not matched:
-                msg = "No matches found in the prediction pool.\n\n"
-                for u in unmatched:
-                    msg += f"  - {u['slip_match']['home']} vs {u['slip_match']['away']}: {u['reason']}\n"
-                msg += "\nUse /pool to see available matches."
-                await progress.edit_text(msg)
-                return
-
-            # Generate 3 slips
-            slips = generate_slips_from_matches(matched)
-
-            # Format and send
-            msg_parts = []
-            if unmatched:
-                msg_parts.append("Some matches not in pool:")
-                for u in unmatched:
-                    msg_parts.append(f"  - {u['slip_match']['raw_line']}")
-                msg_parts.append("")
-
-            safe_msg = format_slip_telegram(slips["safe_slip"], "SAFE", "LOW RISK")
-            medium_msg = format_slip_telegram(slips["medium_slip"], "MEDIUM", "MEDIUM RISK")
-            risky_msg = format_slip_telegram(slips["risky_slip"], "RISKY", "HIGH RISK")
-
-            # Send in parts (Telegram 4096 char limit)
-            full_msg = "\n".join(msg_parts) if msg_parts else ""
-
-            await progress.delete()
-
-            if full_msg:
-                await update.message.reply_text(full_msg[:4000])
-
-            for slip_msg in [safe_msg, medium_msg, risky_msg]:
-                if slip_msg and "No qualifying" not in slip_msg:
-                    await update.message.reply_text(slip_msg[:4000])
-
-            # Log interaction
-            try:
-                log_user_slip(
-                    user_id=update.effective_user.id,
-                    username=update.effective_user.username or "",
-                    slip_text=text,
-                    parsed_matches=[m["slip_match"] for m in matched],
-                    returned_slips={
-                        "safe_count": len(slips["safe_slip"]),
-                        "medium_count": len(slips["medium_slip"]),
-                        "risky_count": len(slips["risky_slip"]),
-                    },
-                )
-            except Exception:
-                pass
-
-        except Exception as e:
-            logger.error(f"Slip scan error: {e}", exc_info=True)
-            await progress.edit_text(f"Error analyzing slip: {e}")
-
-        return True  # Indicates we handled it
-
-    return False  # Not a slip, let other handlers process
-
 
 # =============================================================================
 # ERROR HANDLER
@@ -1538,8 +1334,6 @@ def main() -> None:
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("help", cmd_help))
     app.add_handler(CommandHandler("analyze", cmd_analyze))
-    app.add_handler(CommandHandler("pool", cmd_pool))
-    app.add_handler(CommandHandler("scan", cmd_scan))
     app.add_handler(CommandHandler("search", cmd_search))
     app.add_handler(CommandHandler("full", cmd_full))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_analyze_text))
