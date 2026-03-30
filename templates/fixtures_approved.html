@@ -1,0 +1,99 @@
+{% extends "layout.html" %}
+{% block title %}Fixtures & Picks - SportyBot{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2>Fixtures & Picks</h2>
+        <p class="text-muted mb-0">Your approved predictions ready to send</p>
+    </div>
+    <div>
+        <a href="{{ url_for('schedule') }}" class="btn btn-outline-light me-2">
+            <i class="fas fa-calendar me-1"></i> Manage Schedule
+        </a>
+    </div>
+</div>
+
+{% if days %}
+{% for day in days %}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-calendar-day me-2"></i>
+            {{ day.date_label }}
+            {% if day.is_today %}
+            <span class="badge bg-success ms-2">TODAY</span>
+            {% endif %}
+        </h5>
+        <span class="badge bg-success"><i class="fas fa-check me-1"></i>{{ day.matches|length }} approved</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Match</th>
+                        <th>League</th>
+                        <th>Time</th>
+                        <th>Market</th>
+                        <th>Pick</th>
+                        <th>Odds</th>
+                        <th>Tier</th>
+                        <th>Conf</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for m in day.matches %}
+                <tr>
+                    <td><strong>{{ m.home }}</strong> <span class="text-muted">vs</span> <strong>{{ m.away }}</strong></td>
+                    <td><span class="badge bg-secondary">{{ m.league }}</span></td>
+                    <td class="small text-muted">{{ m.time }}</td>
+                    <td>{{ m.market }}</td>
+                    <td class="text-success fw-bold">{{ m.pick }}</td>
+                    <td><span class="odds-pill">{{ "%.2f"|format(m.odds) }}</span></td>
+                    <td>
+                        <span class="badge {% if m.tier == 'SAFE' %}bg-success{% elif m.tier == 'MODERATE' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                            {{ m.tier }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if m.confidence %}
+                        <span class="{% if m.confidence >= 85 %}text-success{% elif m.confidence >= 75 %}text-warning{% else %}text-info{% endif %}">
+                            {{ m.confidence }}%
+                        </span>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<div class="card">
+    <div class="card-body text-center">
+        <form method="POST" action="{{ url_for('send_approved_picks') }}" class="d-inline" onsubmit="return confirm('Send all approved picks to VIPs?')">
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-paper-plane me-2"></i> Send All to VIPs
+            </button>
+        </form>
+    </div>
+</div>
+
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-clipboard-check fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">No approved predictions</h5>
+        <p class="text-muted mb-3">Go to the Schedule page to set and approve predictions.</p>
+        <a href="{{ url_for('schedule') }}" class="btn btn-primary">
+            <i class="fas fa-calendar me-1"></i> Go to Schedule
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

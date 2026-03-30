@@ -1,0 +1,432 @@
+{% extends "layout.html" %}
+{% block title %}Dashboard - SportyBot{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Dashboard</h2>
+    <p class="text-muted">Overview of your SportyBot VIP system</p>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon" style="background:rgba(99,102,241,0.15);color:#6366f1;">
+                    <i class="fas fa-crown"></i>
+                </div>
+                <div class="ms-3">
+                    <div class="text-muted small">Active VIPs</div>
+                    <div class="stat-number">{{ active_vips }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon" style="background:rgba(34,197,94,0.15);color:#22c55e;">
+                    <i class="fas fa-paper-plane"></i>
+                </div>
+                <div class="ms-3">
+                    <div class="text-muted small">Messages Sent Today</div>
+                    <div class="stat-number">{{ msgs_today }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon" style="background:rgba(245,158,11,0.15);color:#f59e0b;">
+                    <i class="fas fa-futbol"></i>
+                </div>
+                <div class="ms-3">
+                    <div class="text-muted small">Today's Fixtures</div>
+                    <div class="stat-number">{{ fixtures_count }}+</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- VIP Breakdown -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">VIP Status</h5>
+                <a href="{{ url_for('vip_management') }}" class="btn btn-sm btn-outline-light">Manage</a>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <span>Total Users</span>
+                    <strong>{{ total_vips }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                    <span><i class="fas fa-circle text-success me-1" style="font-size:8px;"></i> Active</span>
+                    <strong class="text-success">{{ active_vips }}</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span><i class="fas fa-circle text-danger me-1" style="font-size:8px;"></i> Expired</span>
+                    <strong class="text-danger">{{ expired_vips }}</strong>
+                </div>
+                {% if total_vips > 0 %}
+                <div class="progress mt-3" style="height:6px;background:rgba(255,255,255,0.05);">
+                    <div class="progress-bar bg-success" style="width:{{ (active_vips / total_vips * 100)|round }}%"></div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Messages -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Messages</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_msgs %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Recipients</th>
+                                <th>Preview</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for msg in recent_msgs %}
+                            <tr>
+                                <td class="small">{{ msg.sent_date }}</td>
+                                <td><span class="badge bg-primary">{{ msg.sent_count }}</span></td>
+                                <td class="small text-truncate" style="max-width:200px;">{{ msg.message_text }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-4 mb-0">No messages sent yet</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pipeline & Pool Stats -->
+<div class="page-header mt-5">
+    <h2><i class="fas fa-robot me-2"></i>Pipeline & Pool</h2>
+    <p class="text-muted">Automation status and prediction pool health</p>
+</div>
+
+<!-- Pool Stat Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon" style="background:rgba(99,102,241,0.15);color:#6366f1;">
+                    <i class="fas fa-calendar-week"></i>
+                </div>
+                <div class="ms-3">
+                    <div class="text-muted small">Active Matches</div>
+                    <div class="stat-number">{{ pool_stats.get('active_matches', 0) }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon" style="background:rgba(34,197,94,0.15);color:#22c55e;">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="ms-3">
+                    <div class="text-muted small">Pending Predictions</div>
+                    <div class="stat-number">{{ pool_stats.get('total_predictions', 0) }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon" style="background:rgba(245,158,11,0.15);color:#f59e0b;">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <div class="ms-3">
+                    <div class="text-muted small">Avg Confidence</div>
+                    <div class="stat-number">{{ pool_stats.get('avg_confidence', 0) }}%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon" style="background:rgba(239,68,68,0.15);color:#ef4444;">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <div class="ms-3">
+                    <div class="text-muted small">Win Rate</div>
+                    <div class="stat-number">{{ grading_stats.get('win_rate', 0) }}%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Grading Breakdown -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Grading</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <span><i class="fas fa-check-circle text-success me-2"></i>Wins</span>
+                    <strong class="text-success">{{ grading_stats.get('wins', 0) }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                    <span><i class="fas fa-times-circle text-danger me-2"></i>Losses</span>
+                    <strong class="text-danger">{{ grading_stats.get('losses', 0) }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                    <span><i class="fas fa-clock text-warning me-2"></i>Pending</span>
+                    <strong class="text-warning">{{ grading_stats.get('pending', 0) }}</strong>
+                </div>
+                {% if grading_stats.get('total_graded', 0) > 0 %}
+                <div class="progress mt-2" style="height:6px;background:rgba(255,255,255,0.05);">
+                    <div class="progress-bar bg-success" style="width:{{ grading_stats.get('win_rate', 0) }}%"></div>
+                </div>
+                <div class="text-muted small mt-1">{{ grading_stats.get('total_graded', 0) }} total graded</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Predictions by Tier -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Predictions by Tier</h5>
+            </div>
+            <div class="card-body">
+                {% set tiers = pool_stats.get('predictions_by_tier', {}) %}
+                <div class="d-flex justify-content-between mb-3">
+                    <span><span class="badge badge-safe me-2">SAFE</span></span>
+                    <strong>{{ tiers.get('safe', 0) }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                    <span><span class="badge badge-moderate me-2">MEDIUM</span></span>
+                    <strong>{{ tiers.get('medium', 0) }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                    <span><span class="badge badge-risky me-2">RISKY</span></span>
+                    <strong>{{ tiers.get('risky', 0) }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mt-3 pt-3 border-top" style="border-color:rgba(255,255,255,0.05) !important;">
+                    <span class="text-muted">Today's Matches</span>
+                    <strong>{{ pool_stats.get('today_matches', 0) }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Matches -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">7-Day Schedule</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if upcoming_by_date %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th class="text-end">Matches</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for day in upcoming_by_date %}
+                            <tr>
+                                <td class="small">{{ day.date }}</td>
+                                <td class="text-end"><span class="badge bg-primary">{{ day.matches }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-4 mb-0">No upcoming matches in pool</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Accuracy by Risk Tier -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Accuracy by Risk Tier</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if accuracy_by_tier %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Tier</th>
+                                <th>W/L</th>
+                                <th>Accuracy</th>
+                                <th>Avg Confidence</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for a in accuracy_by_tier %}
+                            <tr>
+                                <td>
+                                    {% if a.risk_tier == 'safe' %}
+                                    <span class="badge badge-safe">SAFE</span>
+                                    {% elif a.risk_tier == 'medium' %}
+                                    <span class="badge badge-moderate">MEDIUM</span>
+                                    {% else %}
+                                    <span class="badge badge-risky">RISKY</span>
+                                    {% endif %}
+                                </td>
+                                <td class="small">{{ a.wins }}W / {{ a.total - a.wins }}L</td>
+                                <td>
+                                    <strong>{{ a.accuracy }}%</strong>
+                                    <div class="confidence-bar mt-1" style="width:80px;">
+                                        <div class="fill bg-success" style="width:{{ a.accuracy }}%;"></div>
+                                    </div>
+                                </td>
+                                <td class="small">{{ a.avg_confidence }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-4 mb-0">No graded predictions yet</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Pipeline Runs -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Pipeline Runs</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_runs %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Events</th>
+                                <th>Qualified</th>
+                                <th>Picks</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for run in recent_runs %}
+                            <tr>
+                                <td class="small">{{ run.run_date }}<br><span class="text-muted">{{ run.run_time }}</span></td>
+                                <td>{{ run.total_events }}</td>
+                                <td>{{ run.qualified_events }}</td>
+                                <td>{{ run.total_picks }}</td>
+                                <td>
+                                    {% if run.status == 'published' %}
+                                    <span class="badge bg-success">Published</span>
+                                    {% elif run.status == 'approved' %}
+                                    <span class="badge bg-primary">Approved</span>
+                                    {% elif run.status == 'generated' %}
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ run.status }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-4 mb-0">No pipeline runs yet</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- n8n Schedule Info -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-clock me-2"></i>n8n Automation Schedule</h5>
+                <span class="badge bg-success"><i class="fas fa-circle me-1" style="font-size:6px;"></i>Active</span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="stat-icon me-3" style="background:rgba(99,102,241,0.15);color:#6366f1;width:36px;height:36px;font-size:0.9rem;">
+                                <i class="fas fa-sync-alt"></i>
+                            </div>
+                            <div>
+                                <div class="small text-muted">Pool Fill (Weekly)</div>
+                                <strong>Monday 00:00</strong>
+                                <div class="text-muted small">Scrape 7 days → score → populate pool</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="stat-icon me-3" style="background:rgba(34,197,94,0.15);color:#22c55e;width:36px;height:36px;font-size:0.9rem;">
+                                <i class="fas fa-refresh"></i>
+                            </div>
+                            <div>
+                                <div class="small text-muted">Odds Refresh (Daily)</div>
+                                <strong>06:00 & 18:00</strong>
+                                <div class="text-muted small">Update odds for existing pool matches only</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="stat-icon me-3" style="background:rgba(245,158,11,0.15);color:#f59e0b;width:36px;height:36px;font-size:0.9rem;">
+                                <i class="fas fa-clipboard-check"></i>
+                            </div>
+                            <div>
+                                <div class="small text-muted">Auto-Grade</div>
+                                <strong>23:00 Daily</strong>
+                                <div class="text-muted small">Grade finished matches</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-refresh dashboard every 5 minutes
+    setTimeout(function() { location.reload(); }, 300000);
+</script>
+{% endblock %}

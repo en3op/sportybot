@@ -1,0 +1,1548 @@
+{
+  "date": "2026-03-29",
+  "generated_at": "2026-03-30 00:00:03",
+  "status": "pending_approval",
+  "summary": {
+    "total_events_scraped": 81,
+    "qualified_matches": 25,
+    "total_picks_generated": 38,
+    "score_range": "79.3 - 93.6",
+    "avg_score": 85.8,
+    "leagues_covered": [
+      "Copa Argentina",
+      "Eliteserien",
+      "FIFA Series",
+      "Ligue 1",
+      "Serie A",
+      "UEFA Conference League",
+      "UEFA Europa League",
+      "UEFA Nations League"
+    ],
+    "reliability_breakdown": {
+      "high": 17,
+      "medium": 8,
+      "low": 0
+    }
+  },
+  "top_matches": [
+    {
+      "match": "Paris Saint-Germain vs Toulouse",
+      "home": "Paris Saint-Germain",
+      "away": "Toulouse",
+      "league": "Ligue 1",
+      "start_time_ms": 1775241900000,
+      "rank": 1,
+      "best_score": 93.6,
+      "reliability": "high",
+      "top_picks": [
+        {
+          "market": "1X2",
+          "pick": "Home",
+          "odds": 1.29,
+          "consistency_score": 73.6,
+          "expert_confidence": 93.6,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (73.6%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: Strong home form, Away struggling, Home ground advantage"
+        },
+        {
+          "market": "Over/Under(total=4.5)",
+          "pick": "Under 4.5",
+          "odds": 1.22,
+          "consistency_score": 77.5,
+          "expert_confidence": 92.5,
+          "tier": "S",
+          "reasoning": "Strong implied probability (77.5%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: xG (2.5) well below 4.5, Tier-1 league"
+        },
+        {
+          "market": "Over/Under(total=2)",
+          "pick": "Over 2",
+          "odds": 1.25,
+          "consistency_score": 75.2,
+          "expert_confidence": 86.2,
+          "tier": "S",
+          "reasoning": "Strong implied probability (75.2%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: xG (2.5) above 2.0, Tier-1 league"
+        }
+      ],
+      "market_count": 26,
+      "expert_analysis": {
+        "home_form": 80.0,
+        "away_form": 25.0,
+        "expected_goals": 2.5,
+        "league_tier": 1
+      }
+    },
+    {
+      "match": "Strasbourg vs Nice",
+      "home": "Strasbourg",
+      "away": "Nice",
+      "league": "Ligue 1",
+      "start_time_ms": 1775314800000,
+      "rank": 2,
+      "best_score": 92.8,
+      "reliability": "high",
+      "top_picks": [
+        {
+          "market": "Over/Under(total=4)",
+          "pick": "Under 4",
+          "odds": 1.21,
+          "consistency_score": 77.8,
+          "expert_confidence": 92.8,
+          "tier": "S",
+          "reasoning": "Strong implied probability (77.8%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: xG (2.5) well below 4.0, Tier-1 league"
+        },
+        {
+          "market": "Handicap 1:0(hcp=1:0)",
+          "pick": "Home (1:0)",
+          "odds": 1.23,
+          "consistency_score": 75.1,
+          "expert_confidence": 90.1,
+          "tier": "S",
+          "reasoning": "Strong implied probability (75.1%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: Away struggling, Home ground advantage, Tier-1 league"
+        },
+        {
+          "market": "Over/Under(total=1.5)",
+          "pick": "Over 1.5",
+          "odds": 1.22,
+          "consistency_score": 77.1,
+          "expert_confidence": 88.1,
+          "tier": "S",
+          "reasoning": "Strong implied probability (77.1%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: xG (2.5) above 1.5, Tier-1 league"
+        }
+      ],
+      "market_count": 24,
+      "expert_analysis": {
+        "home_form": 55.0,
+        "away_form": 25.0,
+        "expected_goals": 2.5,
+        "league_tier": 1
+      }
+    },
+    {
+      "match": "Monaco vs Marseille",
+      "home": "Monaco",
+      "away": "Marseille",
+      "league": "Ligue 1",
+      "start_time_ms": 1775414700000,
+      "rank": 3,
+      "best_score": 92.1,
+      "reliability": "high",
+      "top_picks": [
+        {
+          "market": "Over/Under(total=4.5)",
+          "pick": "Under 4.5",
+          "odds": 1.22,
+          "consistency_score": 77.1,
+          "expert_confidence": 92.1,
+          "tier": "S",
+          "reasoning": "Strong implied probability (77.1%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: xG (2.5) well below 4.5, Tier-1 league"
+        },
+        {
+          "market": "Over/Under(total=2)",
+          "pick": "Over 2",
+          "odds": 1.25,
+          "consistency_score": 75.7,
+          "expert_confidence": 86.7,
+          "tier": "S",
+          "reasoning": "Strong implied probability (75.7%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: xG (2.5) above 2.0, Tier-1 league"
+        },
+        {
+          "market": "Handicap 0:2(hcp=0:2)",
+          "pick": "Away (0:2)",
+          "odds": 1.23,
+          "consistency_score": 75.3,
+          "expert_confidence": 79.3,
+          "tier": "S",
+          "reasoning": "Strong implied probability (75.3%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: Tier-1 league | Risk: Away pick riskier"
+        }
+      ],
+      "market_count": 25,
+      "expert_analysis": {
+        "home_form": 48.0,
+        "away_form": 42.0,
+        "expected_goals": 2.5,
+        "league_tier": 1
+      }
+    },
+    {
+      "match": "Bologna vs US Lecce",
+      "home": "Bologna",
+      "away": "US Lecce",
+      "league": "Serie A",
+      "start_time_ms": 1776009600000,
+      "rank": 4,
+      "best_score": 91.8,
+      "reliability": "high",
+      "top_picks": [
+        {
+          "market": "Draw No Bet",
+          "pick": "Home",
+          "odds": 1.24,
+          "consistency_score": 76.8,
+          "expert_confidence": 91.8,
+          "tier": "S",
+          "reasoning": "Strong implied probability (76.8%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: Away struggling, Home ground advantage, Tier-1 league"
+        },
+        {
+          "market": "Over/Under(total=3.5)",
+          "pick": "Under 3.5",
+          "odds": 1.26,
+          "consistency_score": 74.6,
+          "expert_confidence": 85.6,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (74.6%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: xG (2.5) below 3.5, Tier-1 league"
+        },
+        {
+          "market": "Over/Under(total=1.5)",
+          "pick": "Over 1.5",
+          "odds": 1.36,
+          "consistency_score": 69.5,
+          "expert_confidence": 80.5,
+          "tier": "A+",
+          "reasoning": "Solid implied probability (69.5%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: xG (2.5) above 1.5, Tier-1 league"
+        }
+      ],
+      "market_count": 24,
+      "expert_analysis": {
+        "home_form": 62.0,
+        "away_form": 25.0,
+        "expected_goals": 2.5,
+        "league_tier": 1
+      }
+    },
+    {
+      "match": "Paris FC vs Monaco",
+      "home": "Paris FC",
+      "away": "Monaco",
+      "league": "Ligue 1",
+      "start_time_ms": 1775840400000,
+      "rank": 5,
+      "best_score": 91.3,
+      "reliability": "high",
+      "top_picks": [
+        {
+          "market": "Over/Under(total=4)",
+          "pick": "Under 4",
+          "odds": 1.24,
+          "consistency_score": 76.3,
+          "expert_confidence": 91.3,
+          "tier": "S",
+          "reasoning": "Strong implied probability (76.3%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: xG (2.5) well below 4.0, Tier-1 league"
+        },
+        {
+          "market": "Over/Under(total=1.5)",
+          "pick": "Over 1.5",
+          "odds": 1.21,
+          "consistency_score": 78.0,
+          "expert_confidence": 89.0,
+          "tier": "S",
+          "reasoning": "Strong implied probability (78.0%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: xG (2.5) above 1.5, Tier-1 league"
+        },
+        {
+          "market": "Over/Under(total=2)",
+          "pick": "Over 2",
+          "odds": 1.3,
+          "consistency_score": 72.3,
+          "expert_confidence": 83.3,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (72.3%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: xG (2.5) above 2.0, Tier-1 league"
+        }
+      ],
+      "market_count": 25,
+      "expert_analysis": {
+        "home_form": 35.0,
+        "away_form": 48.0,
+        "expected_goals": 2.5,
+        "league_tier": 1
+      }
+    },
+    {
+      "match": "Latvia vs Gibraltar",
+      "home": "Latvia",
+      "away": "Gibraltar",
+      "league": "UEFA Nations League",
+      "start_time_ms": 1774972800000,
+      "rank": 6,
+      "best_score": 90.1,
+      "reliability": "medium",
+      "top_picks": [
+        {
+          "market": "1X2",
+          "pick": "Home",
+          "odds": 1.2,
+          "consistency_score": 80.1,
+          "expert_confidence": 90.1,
+          "tier": "S",
+          "reasoning": "Strong implied probability (80.1%) | No penalty flags | Elite consistency",
+          "expert_reasoning": "Pro: Strong home form, Away struggling, Home ground advantage"
+        },
+        {
+          "market": "Over/Under(total=3.5)",
+          "pick": "Under 3.5",
+          "odds": 1.31,
+          "consistency_score": 72.8,
+          "expert_confidence": 73.8,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (72.8%) | No penalty flags | High consistency",
+          "expert_reasoning": "Pro: xG (2.5) below 3.5"
+        },
+        {
+          "market": "Over/Under(total=1.5)",
+          "pick": "Over 1.5",
+          "odds": 1.32,
+          "consistency_score": 72.0,
+          "expert_confidence": 73.0,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (72.0%) | No penalty flags | High consistency",
+          "expert_reasoning": "Pro: xG (2.5) above 1.5"
+        }
+      ],
+      "market_count": 23,
+      "expert_analysis": {
+        "home_form": 90.0,
+        "away_form": 25.0,
+        "expected_goals": 2.5,
+        "league_tier": 3
+      }
+    },
+    {
+      "match": "Le Havre vs AJ Auxerre",
+      "home": "Le Havre",
+      "away": "AJ Auxerre",
+      "league": "Ligue 1",
+      "start_time_ms": 1775402100000,
+      "rank": 7,
+      "best_score": 87.9,
+      "reliability": "high",
+      "top_picks": [
+        {
+          "market": "Over/Under(total=3.5)",
+          "pick": "Under 3.5",
+          "odds": 1.23,
+          "consistency_score": 76.9,
+          "expert_confidence": 87.9,
+          "tier": "S",
+          "reasoning": "Strong implied probability (76.9%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: xG (2.5) below 3.5, Tier-1 league"
+        },
+        {
+          "market": "Over/Under(total=3)",
+          "pick": "Under 3",
+          "odds": 1.32,
+          "consistency_score": 71.6,
+          "expert_confidence": 82.6,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (71.6%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: xG (2.5) below 3.0, Tier-1 league"
+        },
+        {
+          "market": "Handicap 1:0(hcp=1:0)",
+          "pick": "Home (1:0)",
+          "odds": 1.36,
+          "consistency_score": 68.2,
+          "expert_confidence": 80.2,
+          "tier": "A+",
+          "reasoning": "Solid implied probability (68.2%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: Away struggling, Tier-1 league"
+        }
+      ],
+      "market_count": 24,
+      "expert_analysis": {
+        "home_form": 48.0,
+        "away_form": 35.0,
+        "expected_goals": 2.5,
+        "league_tier": 1
+      }
+    },
+    {
+      "match": "Parma vs Napoli",
+      "home": "Parma",
+      "away": "Napoli",
+      "league": "Serie A",
+      "start_time_ms": 1775998800000,
+      "rank": 8,
+      "best_score": 87.3,
+      "reliability": "high",
+      "top_picks": [
+        {
+          "market": "Over/Under(total=3.5)",
+          "pick": "Under 3.5",
+          "odds": 1.24,
+          "consistency_score": 76.3,
+          "expert_confidence": 87.3,
+          "tier": "S",
+          "reasoning": "Strong implied probability (76.3%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: xG (2.5) below 3.5, Tier-1 league"
+        },
+        {
+          "market": "Draw No Bet",
+          "pick": "Away",
+          "odds": 1.25,
+          "consistency_score": 76.2,
+          "expert_confidence": 84.2,
+          "tier": "S",
+          "reasoning": "Strong implied probability (76.2%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: Home team struggling, Tier-1 league | Risk: Away pick riskier"
+        },
+        {
+          "market": "Over/Under(total=3)",
+          "pick": "Under 3",
+          "odds": 1.33,
+          "consistency_score": 70.6,
+          "expert_confidence": 81.6,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (70.6%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: xG (2.5) below 3.0, Tier-1 league"
+        }
+      ],
+      "market_count": 24,
+      "expert_analysis": {
+        "home_form": 25.0,
+        "away_form": 62.0,
+        "expected_goals": 2.5,
+        "league_tier": 1
+      }
+    },
+    {
+      "match": "Angers vs Lyon",
+      "home": "Angers",
+      "away": "Lyon",
+      "league": "Ligue 1",
+      "start_time_ms": 1775394000000,
+      "rank": 9,
+      "best_score": 86.9,
+      "reliability": "high",
+      "top_picks": [
+        {
+          "market": "Over/Under(total=3.5)",
+          "pick": "Under 3.5",
+          "odds": 1.24,
+          "consistency_score": 75.9,
+          "expert_confidence": 86.9,
+          "tier": "S",
+          "reasoning": "Strong implied probability (75.9%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: xG (2.5) below 3.5, Tier-1 league"
+        },
+        {
+          "market": "Handicap 0:1(hcp=0:1)",
+          "pick": "Away (0:1)",
+          "odds": 1.2,
+          "consistency_score": 77.2,
+          "expert_confidence": 85.2,
+          "tier": "S",
+          "reasoning": "Strong implied probability (77.2%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: Home team struggling, Tier-1 league | Risk: Away pick riskier"
+        },
+        {
+          "market": "Draw No Bet",
+          "pick": "Away",
+          "odds": 1.33,
+          "consistency_score": 71.5,
+          "expert_confidence": 79.5,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (71.5%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: Home team struggling, Tier-1 league | Risk: Away pick riskier"
+        }
+      ],
+      "market_count": 24,
+      "expert_analysis": {
+        "home_form": 25.0,
+        "away_form": 55.0,
+        "expected_goals": 2.5,
+        "league_tier": 1
+      }
+    },
+    {
+      "match": "Fiorentina vs Lazio",
+      "home": "Fiorentina",
+      "away": "Lazio",
+      "league": "Serie A",
+      "start_time_ms": 1776105900000,
+      "rank": 10,
+      "best_score": 86.2,
+      "reliability": "high",
+      "top_picks": [
+        {
+          "market": "Over/Under(total=3.5)",
+          "pick": "Under 3.5",
+          "odds": 1.25,
+          "consistency_score": 75.2,
+          "expert_confidence": 86.2,
+          "tier": "S",
+          "reasoning": "Strong implied probability (75.2%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: xG (2.5) below 3.5, Tier-1 league"
+        },
+        {
+          "market": "Handicap 1:0(hcp=1:0)",
+          "pick": "Home (1:0)",
+          "odds": 1.3,
+          "consistency_score": 71.0,
+          "expert_confidence": 83.0,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (71.0%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: Away struggling, Tier-1 league"
+        },
+        {
+          "market": "Handicap 0:2(hcp=0:2)",
+          "pick": "Away (0:2)",
+          "odds": 1.22,
+          "consistency_score": 76.0,
+          "expert_confidence": 80.0,
+          "tier": "S",
+          "reasoning": "Strong implied probability (76.0%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: Tier-1 league | Risk: Away pick riskier"
+        }
+      ],
+      "market_count": 23,
+      "expert_analysis": {
+        "home_form": 48.0,
+        "away_form": 35.0,
+        "expected_goals": 2.5,
+        "league_tier": 1
+      }
+    },
+    {
+      "match": "Lille vs RC Lens",
+      "home": "Lille",
+      "away": "RC Lens",
+      "league": "Ligue 1",
+      "start_time_ms": 1775329500000,
+      "rank": 11,
+      "best_score": 86.2,
+      "reliability": "high",
+      "top_picks": [
+        {
+          "market": "Over/Under(total=1.5)",
+          "pick": "Over 1.5",
+          "odds": 1.25,
+          "consistency_score": 75.2,
+          "expert_confidence": 86.2,
+          "tier": "S",
+          "reasoning": "Strong implied probability (75.2%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: xG (2.5) above 1.5, Tier-1 league"
+        },
+        {
+          "market": "Over/Under(total=2)",
+          "pick": "Over 2",
+          "odds": 1.38,
+          "consistency_score": 68.5,
+          "expert_confidence": 79.5,
+          "tier": "A+",
+          "reasoning": "Solid implied probability (68.5%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: xG (2.5) above 2.0, Tier-1 league"
+        },
+        {
+          "market": "Over/Under(total=3.5)",
+          "pick": "Under 3.5",
+          "odds": 1.39,
+          "consistency_score": 68.0,
+          "expert_confidence": 79.0,
+          "tier": "A+",
+          "reasoning": "Solid implied probability (68.0%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: xG (2.5) below 3.5, Tier-1 league"
+        }
+      ],
+      "market_count": 24,
+      "expert_analysis": {
+        "home_form": 42.0,
+        "away_form": 42.0,
+        "expected_goals": 2.5,
+        "league_tier": 1
+      }
+    },
+    {
+      "match": "Metz vs Nantes",
+      "home": "Metz",
+      "away": "Nantes",
+      "league": "Ligue 1",
+      "start_time_ms": 1775402100000,
+      "rank": 12,
+      "best_score": 86.2,
+      "reliability": "high",
+      "top_picks": [
+        {
+          "market": "Over/Under(total=3.5)",
+          "pick": "Under 3.5",
+          "odds": 1.25,
+          "consistency_score": 75.2,
+          "expert_confidence": 86.2,
+          "tier": "S",
+          "reasoning": "Strong implied probability (75.2%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: xG (2.5) below 3.5, Tier-1 league"
+        },
+        {
+          "market": "Over/Under(total=3)",
+          "pick": "Under 3",
+          "odds": 1.35,
+          "consistency_score": 69.7,
+          "expert_confidence": 80.7,
+          "tier": "A+",
+          "reasoning": "Solid implied probability (69.7%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: xG (2.5) below 3.0, Tier-1 league"
+        },
+        {
+          "market": "Over/Under(total=1.5)",
+          "pick": "Over 1.5",
+          "odds": 1.37,
+          "consistency_score": 68.6,
+          "expert_confidence": 79.6,
+          "tier": "A+",
+          "reasoning": "Solid implied probability (68.6%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: xG (2.5) above 1.5, Tier-1 league"
+        }
+      ],
+      "market_count": 24,
+      "expert_analysis": {
+        "home_form": 42.0,
+        "away_form": 48.0,
+        "expected_goals": 2.5,
+        "league_tier": 1
+      }
+    },
+    {
+      "match": "Genoa vs Sassuolo",
+      "home": "Genoa",
+      "away": "Sassuolo",
+      "league": "Serie A",
+      "start_time_ms": 1775989800000,
+      "rank": 13,
+      "best_score": 86.1,
+      "reliability": "high",
+      "top_picks": [
+        {
+          "market": "Over/Under(total=3.5)",
+          "pick": "Under 3.5",
+          "odds": 1.26,
+          "consistency_score": 75.1,
+          "expert_confidence": 86.1,
+          "tier": "S",
+          "reasoning": "Strong implied probability (75.1%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: xG (2.5) below 3.5, Tier-1 league"
+        },
+        {
+          "market": "Handicap 1:0(hcp=1:0)",
+          "pick": "Home (1:0)",
+          "odds": 1.3,
+          "consistency_score": 70.9,
+          "expert_confidence": 82.9,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (70.9%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: Away struggling, Tier-1 league"
+        },
+        {
+          "market": "Handicap 0:2(hcp=0:2)",
+          "pick": "Away (0:2)",
+          "odds": 1.22,
+          "consistency_score": 75.9,
+          "expert_confidence": 79.9,
+          "tier": "S",
+          "reasoning": "Strong implied probability (75.9%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: Tier-1 league | Risk: Away pick riskier"
+        }
+      ],
+      "market_count": 24,
+      "expert_analysis": {
+        "home_form": 48.0,
+        "away_form": 35.0,
+        "expected_goals": 2.5,
+        "league_tier": 1
+      }
+    },
+    {
+      "match": "Brest vs Rennes",
+      "home": "Brest",
+      "away": "Rennes",
+      "league": "Ligue 1",
+      "start_time_ms": 1775322000000,
+      "rank": 14,
+      "best_score": 85.4,
+      "reliability": "high",
+      "top_picks": [
+        {
+          "market": "Over/Under(total=1.5)",
+          "pick": "Over 1.5",
+          "odds": 1.27,
+          "consistency_score": 74.4,
+          "expert_confidence": 85.4,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (74.4%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: xG (2.5) above 1.5, Tier-1 league"
+        },
+        {
+          "market": "Over/Under(total=3.5)",
+          "pick": "Under 3.5",
+          "odds": 1.37,
+          "consistency_score": 68.6,
+          "expert_confidence": 79.6,
+          "tier": "A+",
+          "reasoning": "Solid implied probability (68.6%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: xG (2.5) below 3.5, Tier-1 league"
+        },
+        {
+          "market": "Handicap 0:1(hcp=0:1)",
+          "pick": "Away (0:1)",
+          "odds": 1.32,
+          "consistency_score": 70.1,
+          "expert_confidence": 78.1,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (70.1%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: Home team struggling, Tier-1 league | Risk: Away pick riskier"
+        }
+      ],
+      "market_count": 25,
+      "expert_analysis": {
+        "home_form": 35.0,
+        "away_form": 48.0,
+        "expected_goals": 2.5,
+        "league_tier": 1
+      }
+    },
+    {
+      "match": "Lorient vs Paris FC",
+      "home": "Lorient",
+      "away": "Paris FC",
+      "league": "Ligue 1",
+      "start_time_ms": 1775402100000,
+      "rank": 15,
+      "best_score": 85.4,
+      "reliability": "high",
+      "top_picks": [
+        {
+          "market": "Over/Under(total=3.5)",
+          "pick": "Under 3.5",
+          "odds": 1.27,
+          "consistency_score": 74.4,
+          "expert_confidence": 85.4,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (74.4%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: xG (2.5) below 3.5, Tier-1 league"
+        },
+        {
+          "market": "Over/Under(total=1.5)",
+          "pick": "Over 1.5",
+          "odds": 1.35,
+          "consistency_score": 69.7,
+          "expert_confidence": 80.7,
+          "tier": "A+",
+          "reasoning": "Solid implied probability (69.7%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: xG (2.5) above 1.5, Tier-1 league"
+        },
+        {
+          "market": "Over/Under(total=3)",
+          "pick": "Under 3",
+          "odds": 1.38,
+          "consistency_score": 68.5,
+          "expert_confidence": 79.5,
+          "tier": "A+",
+          "reasoning": "Solid implied probability (68.5%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: xG (2.5) below 3.0, Tier-1 league"
+        }
+      ],
+      "market_count": 24,
+      "expert_analysis": {
+        "home_form": 48.0,
+        "away_form": 35.0,
+        "expected_goals": 2.5,
+        "league_tier": 1
+      }
+    },
+    {
+      "match": "Porto vs Nottingham Forest",
+      "home": "Porto",
+      "away": "Nottingham Forest",
+      "league": "UEFA Europa League",
+      "start_time_ms": 1775761200000,
+      "rank": 16,
+      "best_score": 84.8,
+      "reliability": "high",
+      "top_picks": [
+        {
+          "market": "Over/Under(total=3.5)",
+          "pick": "Under 3.5",
+          "odds": 1.28,
+          "consistency_score": 73.8,
+          "expert_confidence": 84.8,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (73.8%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: xG (2.5) below 3.5, Tier-1 league"
+        },
+        {
+          "market": "Handicap 1:0(hcp=1:0)",
+          "pick": "Home (1:0)",
+          "odds": 1.31,
+          "consistency_score": 70.9,
+          "expert_confidence": 82.9,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (70.9%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: Away struggling, Tier-1 league"
+        },
+        {
+          "market": "Handicap 0:2(hcp=0:2)",
+          "pick": "Away (0:2)",
+          "odds": 1.23,
+          "consistency_score": 75.3,
+          "expert_confidence": 79.3,
+          "tier": "S",
+          "reasoning": "Strong implied probability (75.3%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: Tier-1 league | Risk: Away pick riskier"
+        }
+      ],
+      "market_count": 24,
+      "expert_analysis": {
+        "home_form": 48.0,
+        "away_form": 35.0,
+        "expected_goals": 2.5,
+        "league_tier": 1
+      }
+    },
+    {
+      "match": "Kristiansund BK vs Bodoe/Glimt",
+      "home": "Kristiansund BK",
+      "away": "Bodoe/Glimt",
+      "league": "Eliteserien",
+      "start_time_ms": 1775487600000,
+      "rank": 17,
+      "best_score": 83.6,
+      "reliability": "medium",
+      "top_picks": [
+        {
+          "market": "Over/Under(total=5.5)",
+          "pick": "Under 5.5",
+          "odds": 1.2,
+          "consistency_score": 78.6,
+          "expert_confidence": 83.6,
+          "tier": "S",
+          "reasoning": "Strong implied probability (78.6%) | No penalty flags | Elite consistency",
+          "expert_reasoning": "Pro: xG (2.5) well below 5.5"
+        },
+        {
+          "market": "1X2",
+          "pick": "Away",
+          "odds": 1.31,
+          "consistency_score": 71.8,
+          "expert_confidence": 75.8,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (71.8%) | No penalty flags | High consistency",
+          "expert_reasoning": "Pro: Away in excellent form, Home team struggling | Risk: Away pick riskier"
+        }
+      ],
+      "market_count": 19,
+      "expert_analysis": {
+        "home_form": 25.0,
+        "away_form": 80.0,
+        "expected_goals": 2.5,
+        "league_tier": 3
+      }
+    },
+    {
+      "match": "Newell's Old Boys vs CA Acassuso",
+      "home": "Newell's Old Boys",
+      "away": "CA Acassuso",
+      "league": "Copa Argentina",
+      "start_time_ms": 1774826100000,
+      "rank": 18,
+      "best_score": 83.6,
+      "reliability": "medium",
+      "top_picks": [
+        {
+          "market": "Draw No Bet",
+          "pick": "Home",
+          "odds": 1.22,
+          "consistency_score": 76.6,
+          "expert_confidence": 83.6,
+          "tier": "S",
+          "reasoning": "Strong implied probability (76.6%) | No penalty flags | Elite consistency",
+          "expert_reasoning": "Pro: Away struggling"
+        },
+        {
+          "market": "Over/Under(total=3)",
+          "pick": "Under 3",
+          "odds": 1.26,
+          "consistency_score": 74.6,
+          "expert_confidence": 80.6,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (74.6%) | No penalty flags | High consistency",
+          "expert_reasoning": "Pro: xG (2.5) below 3.0"
+        }
+      ],
+      "market_count": 23,
+      "expert_analysis": {
+        "home_form": 62.0,
+        "away_form": 25.0,
+        "expected_goals": 2.5,
+        "league_tier": 2
+      }
+    },
+    {
+      "match": "Tromsoe IL vs Rosenborg BK",
+      "home": "Tromsoe IL",
+      "away": "Rosenborg BK",
+      "league": "Eliteserien",
+      "start_time_ms": 1775495700000,
+      "rank": 19,
+      "best_score": 83.2,
+      "reliability": "medium",
+      "top_picks": [
+        {
+          "market": "Draw No Bet",
+          "pick": "Home",
+          "odds": 1.25,
+          "consistency_score": 76.2,
+          "expert_confidence": 83.2,
+          "tier": "S",
+          "reasoning": "Strong implied probability (76.2%) | No penalty flags | Elite consistency",
+          "expert_reasoning": "Pro: Strong home form, Away struggling"
+        },
+        {
+          "market": "Over/Under(total=1.5)",
+          "pick": "Over 1.5",
+          "odds": 1.23,
+          "consistency_score": 76.5,
+          "expert_confidence": 77.5,
+          "tier": "S",
+          "reasoning": "Strong implied probability (76.5%) | No penalty flags | Elite consistency",
+          "expert_reasoning": "Pro: xG (2.5) above 1.5"
+        }
+      ],
+      "market_count": 18,
+      "expert_analysis": {
+        "home_form": 70.0,
+        "away_form": 25.0,
+        "expected_goals": 2.5,
+        "league_tier": 3
+      }
+    },
+    {
+      "match": "Sarpsborg 08 vs IK Start",
+      "home": "Sarpsborg 08",
+      "away": "IK Start",
+      "league": "Eliteserien",
+      "start_time_ms": 1775487600000,
+      "rank": 20,
+      "best_score": 81.5,
+      "reliability": "medium",
+      "top_picks": [
+        {
+          "market": "Over/Under(total=4.5)",
+          "pick": "Under 4.5",
+          "odds": 1.23,
+          "consistency_score": 76.5,
+          "expert_confidence": 81.5,
+          "tier": "S",
+          "reasoning": "Strong implied probability (76.5%) | No penalty flags | Elite consistency",
+          "expert_reasoning": "Pro: xG (2.5) well below 4.5"
+        },
+        {
+          "market": "Handicap 1:0(hcp=1:0)",
+          "pick": "Home (1:0)",
+          "odds": 1.23,
+          "consistency_score": 74.8,
+          "expert_confidence": 76.8,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (74.8%) | No penalty flags | High consistency",
+          "expert_reasoning": "Pro: Away struggling"
+        },
+        {
+          "market": "Draw No Bet",
+          "pick": "Home",
+          "odds": 1.37,
+          "consistency_score": 69.4,
+          "expert_confidence": 71.4,
+          "tier": "A+",
+          "reasoning": "Solid implied probability (69.4%) | No penalty flags | High consistency",
+          "expert_reasoning": "Pro: Away struggling"
+        }
+      ],
+      "market_count": 19,
+      "expert_analysis": {
+        "home_form": 62.0,
+        "away_form": 25.0,
+        "expected_goals": 2.5,
+        "league_tier": 3
+      }
+    },
+    {
+      "match": "Molde vs Lillestroem SK",
+      "home": "Molde",
+      "away": "Lillestroem SK",
+      "league": "Eliteserien",
+      "start_time_ms": 1775487600000,
+      "rank": 21,
+      "best_score": 80.9,
+      "reliability": "medium",
+      "top_picks": [
+        {
+          "market": "Over/Under(total=4.5)",
+          "pick": "Under 4.5",
+          "odds": 1.24,
+          "consistency_score": 75.9,
+          "expert_confidence": 80.9,
+          "tier": "S",
+          "reasoning": "Strong implied probability (75.9%) | No penalty flags | Elite consistency",
+          "expert_reasoning": "Pro: xG (2.5) well below 4.5"
+        },
+        {
+          "market": "Handicap 1:0(hcp=1:0)",
+          "pick": "Home (1:0)",
+          "odds": 1.31,
+          "consistency_score": 69.8,
+          "expert_confidence": 71.8,
+          "tier": "A+",
+          "reasoning": "Solid implied probability (69.8%) | No penalty flags | High consistency",
+          "expert_reasoning": "Pro: Away struggling"
+        }
+      ],
+      "market_count": 19,
+      "expert_analysis": {
+        "home_form": 48.0,
+        "away_form": 35.0,
+        "expected_goals": 2.5,
+        "league_tier": 3
+      }
+    },
+    {
+      "match": "Vaalerenga IF vs Viking FK",
+      "home": "Vaalerenga IF",
+      "away": "Viking FK",
+      "league": "Eliteserien",
+      "start_time_ms": 1775478600000,
+      "rank": 22,
+      "best_score": 80.1,
+      "reliability": "medium",
+      "top_picks": [
+        {
+          "market": "Over/Under(total=4.5)",
+          "pick": "Under 4.5",
+          "odds": 1.26,
+          "consistency_score": 75.1,
+          "expert_confidence": 80.1,
+          "tier": "S",
+          "reasoning": "Strong implied probability (75.1%) | No penalty flags | Elite consistency",
+          "expert_reasoning": "Pro: xG (2.5) well below 4.5"
+        }
+      ],
+      "market_count": 19,
+      "expert_analysis": {
+        "home_form": 35.0,
+        "away_form": 48.0,
+        "expected_goals": 2.5,
+        "league_tier": 3
+      }
+    },
+    {
+      "match": "Shakhtar D vs Alkmaar",
+      "home": "Shakhtar D",
+      "away": "Alkmaar",
+      "league": "UEFA Conference League",
+      "start_time_ms": 1775761200000,
+      "rank": 23,
+      "best_score": 79.9,
+      "reliability": "high",
+      "top_picks": [
+        {
+          "market": "Over/Under(total=1.5)",
+          "pick": "Over 1.5",
+          "odds": 1.24,
+          "consistency_score": 75.9,
+          "expert_confidence": 79.9,
+          "tier": "S",
+          "reasoning": "Strong implied probability (75.9%) | No penalty flags | Tier-1 league | Elite consistency",
+          "expert_reasoning": "Pro: xG (2.5) above 1.5, Tier-1 league"
+        },
+        {
+          "market": "Over/Under(total=2)",
+          "pick": "Over 2",
+          "odds": 1.36,
+          "consistency_score": 69.5,
+          "expert_confidence": 73.5,
+          "tier": "A+",
+          "reasoning": "Solid implied probability (69.5%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: xG (2.5) above 2.0, Tier-1 league"
+        }
+      ],
+      "market_count": 25,
+      "expert_analysis": {
+        "home_form": 48.0,
+        "away_form": 42.0,
+        "expected_goals": 2.5,
+        "league_tier": 3
+      }
+    },
+    {
+      "match": "Azerbaijan vs Sierra Leone",
+      "home": "Azerbaijan",
+      "away": "Sierra Leone",
+      "league": "FIFA Series",
+      "start_time_ms": 1774882800000,
+      "rank": 24,
+      "best_score": 79.6,
+      "reliability": "medium",
+      "top_picks": [
+        {
+          "market": "Over/Under(total=3.5)",
+          "pick": "Under 3.5",
+          "odds": 1.2,
+          "consistency_score": 78.6,
+          "expert_confidence": 79.6,
+          "tier": "S",
+          "reasoning": "Strong implied probability (78.6%) | No penalty flags | Elite consistency",
+          "expert_reasoning": "Pro: xG (2.5) below 3.5"
+        },
+        {
+          "market": "Over/Under(total=3)",
+          "pick": "Under 3",
+          "odds": 1.28,
+          "consistency_score": 73.8,
+          "expert_confidence": 74.8,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (73.8%) | No penalty flags | High consistency",
+          "expert_reasoning": "Pro: xG (2.5) below 3.0"
+        },
+        {
+          "market": "Draw No Bet",
+          "pick": "Home",
+          "odds": 1.28,
+          "consistency_score": 72.2,
+          "expert_confidence": 74.2,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (72.2%) | No penalty flags | High consistency",
+          "expert_reasoning": "Pro: Away struggling"
+        }
+      ],
+      "market_count": 20,
+      "expert_analysis": {
+        "home_form": 62.0,
+        "away_form": 25.0,
+        "expected_goals": 2.5,
+        "league_tier": 3
+      }
+    },
+    {
+      "match": "Crystal Palace vs Fiorentina",
+      "home": "Crystal Palace",
+      "away": "Fiorentina",
+      "league": "UEFA Conference League",
+      "start_time_ms": 1775761200000,
+      "rank": 25,
+      "best_score": 79.3,
+      "reliability": "high",
+      "top_picks": [
+        {
+          "market": "Draw No Bet",
+          "pick": "Home",
+          "odds": 1.28,
+          "consistency_score": 74.3,
+          "expert_confidence": 79.3,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (74.3%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: Away struggling, Tier-1 league"
+        },
+        {
+          "market": "Over/Under(total=1.5)",
+          "pick": "Over 1.5",
+          "odds": 1.3,
+          "consistency_score": 72.3,
+          "expert_confidence": 76.3,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (72.3%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: xG (2.5) above 1.5, Tier-1 league"
+        },
+        {
+          "market": "Over/Under(total=3.5)",
+          "pick": "Under 3.5",
+          "odds": 1.32,
+          "consistency_score": 71.4,
+          "expert_confidence": 75.4,
+          "tier": "A+",
+          "reasoning": "Strong implied probability (71.4%) | No penalty flags | Tier-1 league | High consistency",
+          "expert_reasoning": "Pro: xG (2.5) below 3.5, Tier-1 league"
+        }
+      ],
+      "market_count": 24,
+      "expert_analysis": {
+        "home_form": 62.0,
+        "away_form": 25.0,
+        "expected_goals": 2.5,
+        "league_tier": 3
+      }
+    }
+  ],
+  "safe_slip": [
+    {
+      "match": "Latvia vs Gibraltar",
+      "home": "Latvia",
+      "away": "Gibraltar",
+      "league": "UEFA Nations League",
+      "market": "1X2",
+      "pick": "Home",
+      "odds": 1.2,
+      "consistency_score": 80.1,
+      "expert_confidence": 90.1,
+      "tier": "S",
+      "reasoning": "Strong implied probability (80.1%) | No penalty flags | Elite consistency",
+      "expert_reasoning": "Pro: Strong home form, Away struggling, Home ground advantage",
+      "start_time_ms": 1774972800000
+    },
+    {
+      "match": "Kristiansund BK vs Bodoe/Glimt",
+      "home": "Kristiansund BK",
+      "away": "Bodoe/Glimt",
+      "league": "Eliteserien",
+      "market": "Over/Under(total=5.5)",
+      "pick": "Under 5.5",
+      "odds": 1.2,
+      "consistency_score": 78.6,
+      "expert_confidence": 83.6,
+      "tier": "S",
+      "reasoning": "Strong implied probability (78.6%) | No penalty flags | Elite consistency",
+      "expert_reasoning": "Pro: xG (2.5) well below 5.5",
+      "start_time_ms": 1775487600000
+    },
+    {
+      "match": "Azerbaijan vs Sierra Leone",
+      "home": "Azerbaijan",
+      "away": "Sierra Leone",
+      "league": "FIFA Series",
+      "market": "Over/Under(total=3.5)",
+      "pick": "Under 3.5",
+      "odds": 1.2,
+      "consistency_score": 78.6,
+      "expert_confidence": 79.6,
+      "tier": "S",
+      "reasoning": "Strong implied probability (78.6%) | No penalty flags | Elite consistency",
+      "expert_reasoning": "Pro: xG (2.5) below 3.5",
+      "start_time_ms": 1774882800000
+    },
+    {
+      "match": "Paris FC vs Monaco",
+      "home": "Paris FC",
+      "away": "Monaco",
+      "league": "Ligue 1",
+      "market": "Over/Under(total=1.5)",
+      "pick": "Over 1.5",
+      "odds": 1.21,
+      "consistency_score": 78.0,
+      "expert_confidence": 89.0,
+      "tier": "S",
+      "reasoning": "Strong implied probability (78.0%) | No penalty flags | Tier-1 league | Elite consistency",
+      "expert_reasoning": "Pro: xG (2.5) above 1.5, Tier-1 league",
+      "start_time_ms": 1775840400000
+    },
+    {
+      "match": "Strasbourg vs Nice",
+      "home": "Strasbourg",
+      "away": "Nice",
+      "league": "Ligue 1",
+      "market": "Over/Under(total=4)",
+      "pick": "Under 4",
+      "odds": 1.21,
+      "consistency_score": 77.8,
+      "expert_confidence": 92.8,
+      "tier": "S",
+      "reasoning": "Strong implied probability (77.8%) | No penalty flags | Tier-1 league | Elite consistency",
+      "expert_reasoning": "Pro: xG (2.5) well below 4.0, Tier-1 league",
+      "start_time_ms": 1775314800000
+    }
+  ],
+  "moderate_slip": [
+    {
+      "match": "Latvia vs Gibraltar",
+      "home": "Latvia",
+      "away": "Gibraltar",
+      "league": "UEFA Nations League",
+      "market": "1X2",
+      "pick": "Home",
+      "odds": 1.2,
+      "consistency_score": 80.1,
+      "expert_confidence": 90.1,
+      "tier": "S",
+      "reasoning": "Strong implied probability (80.1%) | No penalty flags | Elite consistency",
+      "expert_reasoning": "Pro: Strong home form, Away struggling, Home ground advantage",
+      "start_time_ms": 1774972800000
+    },
+    {
+      "match": "Kristiansund BK vs Bodoe/Glimt",
+      "home": "Kristiansund BK",
+      "away": "Bodoe/Glimt",
+      "league": "Eliteserien",
+      "market": "Over/Under(total=5.5)",
+      "pick": "Under 5.5",
+      "odds": 1.2,
+      "consistency_score": 78.6,
+      "expert_confidence": 83.6,
+      "tier": "S",
+      "reasoning": "Strong implied probability (78.6%) | No penalty flags | Elite consistency",
+      "expert_reasoning": "Pro: xG (2.5) well below 5.5",
+      "start_time_ms": 1775487600000
+    },
+    {
+      "match": "Azerbaijan vs Sierra Leone",
+      "home": "Azerbaijan",
+      "away": "Sierra Leone",
+      "league": "FIFA Series",
+      "market": "Over/Under(total=3.5)",
+      "pick": "Under 3.5",
+      "odds": 1.2,
+      "consistency_score": 78.6,
+      "expert_confidence": 79.6,
+      "tier": "S",
+      "reasoning": "Strong implied probability (78.6%) | No penalty flags | Elite consistency",
+      "expert_reasoning": "Pro: xG (2.5) below 3.5",
+      "start_time_ms": 1774882800000
+    },
+    {
+      "match": "Paris FC vs Monaco",
+      "home": "Paris FC",
+      "away": "Monaco",
+      "league": "Ligue 1",
+      "market": "Over/Under(total=1.5)",
+      "pick": "Over 1.5",
+      "odds": 1.21,
+      "consistency_score": 78.0,
+      "expert_confidence": 89.0,
+      "tier": "S",
+      "reasoning": "Strong implied probability (78.0%) | No penalty flags | Tier-1 league | Elite consistency",
+      "expert_reasoning": "Pro: xG (2.5) above 1.5, Tier-1 league",
+      "start_time_ms": 1775840400000
+    },
+    {
+      "match": "Strasbourg vs Nice",
+      "home": "Strasbourg",
+      "away": "Nice",
+      "league": "Ligue 1",
+      "market": "Over/Under(total=4)",
+      "pick": "Under 4",
+      "odds": 1.21,
+      "consistency_score": 77.8,
+      "expert_confidence": 92.8,
+      "tier": "S",
+      "reasoning": "Strong implied probability (77.8%) | No penalty flags | Tier-1 league | Elite consistency",
+      "expert_reasoning": "Pro: xG (2.5) well below 4.0, Tier-1 league",
+      "start_time_ms": 1775314800000
+    },
+    {
+      "match": "Paris Saint-Germain vs Toulouse",
+      "home": "Paris Saint-Germain",
+      "away": "Toulouse",
+      "league": "Ligue 1",
+      "market": "Over/Under(total=4.5)",
+      "pick": "Under 4.5",
+      "odds": 1.22,
+      "consistency_score": 77.5,
+      "expert_confidence": 92.5,
+      "tier": "S",
+      "reasoning": "Strong implied probability (77.5%) | No penalty flags | Tier-1 league | Elite consistency",
+      "expert_reasoning": "Pro: xG (2.5) well below 4.5, Tier-1 league",
+      "start_time_ms": 1775241900000
+    },
+    {
+      "match": "Angers vs Lyon",
+      "home": "Angers",
+      "away": "Lyon",
+      "league": "Ligue 1",
+      "market": "Handicap 0:1(hcp=0:1)",
+      "pick": "Away (0:1)",
+      "odds": 1.2,
+      "consistency_score": 77.2,
+      "expert_confidence": 85.2,
+      "tier": "S",
+      "reasoning": "Strong implied probability (77.2%) | No penalty flags | Tier-1 league | Elite consistency",
+      "expert_reasoning": "Pro: Home team struggling, Tier-1 league | Risk: Away pick riskier",
+      "start_time_ms": 1775394000000
+    },
+    {
+      "match": "Monaco vs Marseille",
+      "home": "Monaco",
+      "away": "Marseille",
+      "league": "Ligue 1",
+      "market": "Over/Under(total=4.5)",
+      "pick": "Under 4.5",
+      "odds": 1.22,
+      "consistency_score": 77.1,
+      "expert_confidence": 92.1,
+      "tier": "S",
+      "reasoning": "Strong implied probability (77.1%) | No penalty flags | Tier-1 league | Elite consistency",
+      "expert_reasoning": "Pro: xG (2.5) well below 4.5, Tier-1 league",
+      "start_time_ms": 1775414700000
+    }
+  ],
+  "high_slip": [
+    {
+      "match": "Latvia vs Gibraltar",
+      "home": "Latvia",
+      "away": "Gibraltar",
+      "league": "UEFA Nations League",
+      "market": "1X2",
+      "pick": "Home",
+      "odds": 1.2,
+      "consistency_score": 80.1,
+      "expert_confidence": 90.1,
+      "tier": "S",
+      "reasoning": "Strong implied probability (80.1%) | No penalty flags | Elite consistency",
+      "expert_reasoning": "Pro: Strong home form, Away struggling, Home ground advantage",
+      "start_time_ms": 1774972800000
+    },
+    {
+      "match": "Kristiansund BK vs Bodoe/Glimt",
+      "home": "Kristiansund BK",
+      "away": "Bodoe/Glimt",
+      "league": "Eliteserien",
+      "market": "Over/Under(total=5.5)",
+      "pick": "Under 5.5",
+      "odds": 1.2,
+      "consistency_score": 78.6,
+      "expert_confidence": 83.6,
+      "tier": "S",
+      "reasoning": "Strong implied probability (78.6%) | No penalty flags | Elite consistency",
+      "expert_reasoning": "Pro: xG (2.5) well below 5.5",
+      "start_time_ms": 1775487600000
+    },
+    {
+      "match": "Azerbaijan vs Sierra Leone",
+      "home": "Azerbaijan",
+      "away": "Sierra Leone",
+      "league": "FIFA Series",
+      "market": "Over/Under(total=3.5)",
+      "pick": "Under 3.5",
+      "odds": 1.2,
+      "consistency_score": 78.6,
+      "expert_confidence": 79.6,
+      "tier": "S",
+      "reasoning": "Strong implied probability (78.6%) | No penalty flags | Elite consistency",
+      "expert_reasoning": "Pro: xG (2.5) below 3.5",
+      "start_time_ms": 1774882800000
+    },
+    {
+      "match": "Paris FC vs Monaco",
+      "home": "Paris FC",
+      "away": "Monaco",
+      "league": "Ligue 1",
+      "market": "Over/Under(total=1.5)",
+      "pick": "Over 1.5",
+      "odds": 1.21,
+      "consistency_score": 78.0,
+      "expert_confidence": 89.0,
+      "tier": "S",
+      "reasoning": "Strong implied probability (78.0%) | No penalty flags | Tier-1 league | Elite consistency",
+      "expert_reasoning": "Pro: xG (2.5) above 1.5, Tier-1 league",
+      "start_time_ms": 1775840400000
+    },
+    {
+      "match": "Strasbourg vs Nice",
+      "home": "Strasbourg",
+      "away": "Nice",
+      "league": "Ligue 1",
+      "market": "Over/Under(total=4)",
+      "pick": "Under 4",
+      "odds": 1.21,
+      "consistency_score": 77.8,
+      "expert_confidence": 92.8,
+      "tier": "S",
+      "reasoning": "Strong implied probability (77.8%) | No penalty flags | Tier-1 league | Elite consistency",
+      "expert_reasoning": "Pro: xG (2.5) well below 4.0, Tier-1 league",
+      "start_time_ms": 1775314800000
+    },
+    {
+      "match": "Paris Saint-Germain vs Toulouse",
+      "home": "Paris Saint-Germain",
+      "away": "Toulouse",
+      "league": "Ligue 1",
+      "market": "Over/Under(total=4.5)",
+      "pick": "Under 4.5",
+      "odds": 1.22,
+      "consistency_score": 77.5,
+      "expert_confidence": 92.5,
+      "tier": "S",
+      "reasoning": "Strong implied probability (77.5%) | No penalty flags | Tier-1 league | Elite consistency",
+      "expert_reasoning": "Pro: xG (2.5) well below 4.5, Tier-1 league",
+      "start_time_ms": 1775241900000
+    },
+    {
+      "match": "Angers vs Lyon",
+      "home": "Angers",
+      "away": "Lyon",
+      "league": "Ligue 1",
+      "market": "Handicap 0:1(hcp=0:1)",
+      "pick": "Away (0:1)",
+      "odds": 1.2,
+      "consistency_score": 77.2,
+      "expert_confidence": 85.2,
+      "tier": "S",
+      "reasoning": "Strong implied probability (77.2%) | No penalty flags | Tier-1 league | Elite consistency",
+      "expert_reasoning": "Pro: Home team struggling, Tier-1 league | Risk: Away pick riskier",
+      "start_time_ms": 1775394000000
+    },
+    {
+      "match": "Monaco vs Marseille",
+      "home": "Monaco",
+      "away": "Marseille",
+      "league": "Ligue 1",
+      "market": "Over/Under(total=4.5)",
+      "pick": "Under 4.5",
+      "odds": 1.22,
+      "consistency_score": 77.1,
+      "expert_confidence": 92.1,
+      "tier": "S",
+      "reasoning": "Strong implied probability (77.1%) | No penalty flags | Tier-1 league | Elite consistency",
+      "expert_reasoning": "Pro: xG (2.5) well below 4.5, Tier-1 league",
+      "start_time_ms": 1775414700000
+    },
+    {
+      "match": "Le Havre vs AJ Auxerre",
+      "home": "Le Havre",
+      "away": "AJ Auxerre",
+      "league": "Ligue 1",
+      "market": "Over/Under(total=3.5)",
+      "pick": "Under 3.5",
+      "odds": 1.23,
+      "consistency_score": 76.9,
+      "expert_confidence": 87.9,
+      "tier": "S",
+      "reasoning": "Strong implied probability (76.9%) | No penalty flags | Tier-1 league | Elite consistency",
+      "expert_reasoning": "Pro: xG (2.5) below 3.5, Tier-1 league",
+      "start_time_ms": 1775402100000
+    },
+    {
+      "match": "Bologna vs US Lecce",
+      "home": "Bologna",
+      "away": "US Lecce",
+      "league": "Serie A",
+      "market": "Draw No Bet",
+      "pick": "Home",
+      "odds": 1.24,
+      "consistency_score": 76.8,
+      "expert_confidence": 91.8,
+      "tier": "S",
+      "reasoning": "Strong implied probability (76.8%) | No penalty flags | Tier-1 league | Elite consistency",
+      "expert_reasoning": "Pro: Away struggling, Home ground advantage, Tier-1 league",
+      "start_time_ms": 1776009600000
+    }
+  ],
+  "metadata": {
+    "safe_combined_odds": 2.53,
+    "moderate_combined_odds": 4.52,
+    "high_combined_odds": 6.89
+  },
+  "admin_actions": {
+    "approved": false,
+    "edited_picks": [],
+    "removed_picks": [],
+    "published_to_vip": false,
+    "published_at": null
+  },
+  "run_id": 17
+}

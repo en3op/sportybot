@@ -1,0 +1,152 @@
+{% extends "layout.html" %}
+{% block title %}Fixtures & Picks - SportyBot{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2>Today's Fixtures & Picks</h2>
+        <p class="text-muted mb-0">Multi-market analysis from Sportybet</p>
+    </div>
+    <div>
+        <a href="{{ url_for('refresh_fixtures') }}" class="btn btn-outline-light me-2">
+            <i class="fas fa-sync me-1"></i> Refresh
+        </a>
+        <form method="POST" action="{{ url_for('send_all_picks') }}" class="d-inline" onsubmit="return confirm('Send all 3 slips to all active VIPs?')">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane me-1"></i> Send 3 Slips to VIPs
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Top 10 Picks -->
+{% if top_10 %}
+<h4 class="mb-3"><i class="fas fa-star text-warning me-2"></i>Top 10 Picks</h4>
+<div class="card mb-4">
+    <div class="list-group list-group-flush">
+        {% for pick in top_10 %}
+        <div class="list-group-item" style="background:transparent;border-color:rgba(255,255,255,0.05);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center mb-1">
+                        <span class="badge bg-secondary me-2">{{ pick.league }}</span>
+                        <span class="badge bg-info me-2" style="font-size:0.7rem;">{{ pick.market }}</span>
+                        {% if pick.start_time_ms %}
+                        <span class="text-muted small"><i class="far fa-clock me-1"></i>{{ (pick.start_time_ms / 1000)|int|timeformat }}</span>
+                        {% endif %}
+                    </div>
+                    <h6 class="mb-1">{{ pick.home }} <span class="text-muted">vs</span> {{ pick.away }}</h6>
+                    <span class="text-success fw-bold">{{ pick.pick }}</span>
+                    <span class="text-muted">@ {{ "%.2f"|format(pick.odds) }}</span>
+                </div>
+                <div class="text-end ms-3">
+                    <div class="mb-1">
+                        <strong class="{% if pick.tier == 'A' %}text-success{% elif pick.tier == 'B+' %}text-warning{% else %}text-info{% endif %}">
+                            Tier {{ pick.tier }}
+                        </strong>
+                    </div>
+                    <small class="text-muted">{{ pick.implied }}% implied</small>
+                    <div class="mt-1">
+                        <form method="POST" action="{{ url_for('send_pick', event_id=pick.event_id) }}" class="d-inline" onsubmit="return confirm('Send this pick?')">
+                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-paper-plane"></i> Send
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- 3 Slips -->
+{% if slips %}
+<div class="row g-3 mb-4">
+    {% for key, label, color, risk in [('slip_a', 'SLIP A', 'success', 'SAFE'), ('slip_b', 'SLIP B', 'warning', 'MODERATE'), ('slip_c', 'SLIP C', 'danger', 'HIGH')] %}
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-{{ color }}">{{ label }}</h5>
+                <span class="badge bg-{{ color }}">{{ slips.combined[key[-1]] }}x</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for p in slips[key] %}
+                    <div class="list-group-item" style="background:transparent;border-color:rgba(255,255,255,0.03);">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <small class="text-muted">{{ p.league }}</small><br>
+                                <strong>{{ p.home }}</strong> vs <strong>{{ p.away }}</strong><br>
+                                <small>{{ p.market }}: {{ p.pick }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-{{ color }} bg-opacity-25 text-{{ color }}">{{ "%.2f"|format(p.odds) }}</span><br>
+                                <small class="text-muted">Tier {{ p.tier }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer text-center">
+                <small class="text-muted">Risk: {{ risk }}</small>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- All Fixtures -->
+<h4 class="mb-3"><i class="fas fa-list me-2"></i>All Fixtures ({{ events|length }})</h4>
+{% if events %}
+<div class="card">
+    <div class="list-group list-group-flush" style="max-height:700px;overflow-y:auto;">
+        {% for e in events %}
+        <div class="list-group-item" style="background:transparent;border-color:rgba(255,255,255,0.05);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="d-flex align-items-center mb-1">
+                        <span class="badge bg-secondary me-2" style="font-size:0.7rem;">{{ e.league }}</span>
+                        {% if e.start_time_ms %}
+                        <span class="text-muted small"><i class="far fa-clock me-1"></i>{{ (e.start_time_ms / 1000)|int|timeformat }}</span>
+                        {% endif %}
+                        {% if e.plays %}
+                        <span class="badge bg-info ms-2" style="font-size:0.6rem;">{{ e.plays|length }} value plays</span>
+                        {% endif %}
+                    </div>
+                    <span><strong>{{ e.home }}</strong> <span class="text-muted">vs</span> <strong>{{ e.away }}</strong></span>
+                    {% if e.plays %}
+                    <div class="mt-1">
+                        {% for play in e.plays[:3] %}
+                        <span class="badge bg-{{ 'success' if play.tier == 'A' else 'warning' if play.tier == 'B+' else 'info' }} bg-opacity-25 me-1" style="font-size:0.65rem;">
+                            {{ play.market }}: {{ play.pick_short }} @ {{ "%.2f"|format(play.odds) }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    {% if e.markets.get('1X2') %}
+                    <span class="odds-pill">1: {{ "%.2f"|format(e.markets['1X2'].get('Home', 0)) }}</span>
+                    <span class="odds-pill">X: {{ "%.2f"|format(e.markets['1X2'].get('Draw', 0)) }}</span>
+                    <span class="odds-pill">2: {{ "%.2f"|format(e.markets['1X2'].get('Away', 0)) }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-calendar-xmark fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">No matches scheduled for today</h5>
+        <p class="text-muted mb-0">Check back tomorrow or hit Refresh to reload.</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,275 @@
+{
+  "name": "SportyBot Weekly Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "weekly-trigger",
+      "name": "Weekly Monday Midnight",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6,18 * * *"
+            }
+          ]
+        }
+      },
+      "id": "daily-trigger",
+      "name": "Daily 6AM & 6PM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 520]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 23 * * *"
+            }
+          ]
+        }
+      },
+      "id": "grade-trigger",
+      "name": "Daily 11PM Grade",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 740]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:5000/api/n8n/weekly",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-N8N-Secret",
+              "value": "sportybot-n8n-2026"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "id": "weekly-run",
+      "name": "Run Weekly Cycle",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:5000/api/n8n/refresh",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-N8N-Secret",
+              "value": "sportybot-n8n-2026"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "daily-refresh",
+      "name": "Run Daily Refresh",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [480, 520]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:5000/api/n8n/grade",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-N8N-Secret",
+              "value": "sportybot-n8n-2026"
+            }
+          ]
+        }
+      },
+      "id": "grade-matches",
+      "name": "Grade Finished Matches",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [480, 740]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:5000/api/n8n/push-telegram",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-N8N-Secret",
+              "value": "sportybot-n8n-2026"
+            }
+          ]
+        }
+      },
+      "id": "push-vip",
+      "name": "Push to VIP Telegram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://127.0.0.1:5000/api/n8n/pool-summary",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-N8N-Secret",
+              "value": "sportybot-n8n-2026"
+            }
+          ]
+        }
+      },
+      "id": "get-summary",
+      "name": "Get Pool Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [720, 520]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.sent }}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "id": "check-sent",
+      "name": "Check Sent Count",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "message",
+              "value": "={{ 'Sent ' + $json.sent + ' VIP messages' }}"
+            }
+          ]
+        }
+      },
+      "id": "log-success",
+      "name": "Log Success",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1200, 260]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "message",
+              "value": "No picks to send"
+            }
+          ]
+        }
+      },
+      "id": "log-no-picks",
+      "name": "Log No Picks",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1200, 360]
+    }
+  ],
+  "connections": {
+    "Weekly Monday Midnight": {
+      "main": [
+        [
+          { "node": "Run Weekly Cycle", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Daily 6AM & 6PM": {
+      "main": [
+        [
+          { "node": "Run Daily Refresh", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Daily 11PM Grade": {
+      "main": [
+        [
+          { "node": "Grade Finished Matches", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Run Weekly Cycle": {
+      "main": [
+        [
+          { "node": "Push to VIP Telegram", "type": "main", "index": 0 },
+          { "node": "Get Pool Summary", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Run Daily Refresh": {
+      "main": [
+        [
+          { "node": "Get Pool Summary", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Push to VIP Telegram": {
+      "main": [
+        [
+          { "node": "Check Sent Count", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Check Sent Count": {
+      "main": [
+        [
+          { "node": "Log Success", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Log No Picks", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 3
+}

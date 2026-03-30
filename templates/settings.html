@@ -1,0 +1,73 @@
+{% extends "layout.html" %}
+{% block title %}Settings - SportyBot{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Settings</h2>
+    <p class="text-muted">Bot configuration and status</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-robot me-2"></i>Bot Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <span>Bot Token</span>
+                    <code class="small">{{ bot_token }}</code>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                    <span>Status</span>
+                    <span class="badge badge-active">Running</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                    <span>Data Source</span>
+                    <span>Sportybet API + Flashscore</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>VIP Duration</span>
+                    <span>7 days (1 week)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-terminal me-2"></i>Quick Commands</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">Send these commands to the bot on Telegram:</p>
+                <div class="mb-2"><code>/start</code> - Welcome message</div>
+                <div class="mb-2"><code>/safe</code> - Get today's picks (VIP only)</div>
+                <div class="mb-2"><code>/status</code> - Check VIP status</div>
+                <div class="mb-2"><code>/addvip &lt;user_id&gt; [weeks]</code> - Add VIP (admin)</div>
+                <div class="mb-2"><code>/removevip &lt;user_id&gt;</code> - Remove VIP (admin)</div>
+                <div class="mb-2"><code>/listvip</code> - List all VIPs (admin)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-database me-2"></i>Database</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <span>Database File</span>
+                    <code>{{ db_path }}</code>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Database Type</span>
+                    <span>SQLite3</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends "layout.html" %}
+{% block title %}VIP Management - SportyBot{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>VIP Management</h2>
+    <p class="text-muted">Manage your VIP subscribers</p>
+</div>
+
+<!-- Add VIP Form -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-plus me-2"></i>Add / Extend VIP</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('add_vip') }}" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Telegram User ID</label>
+                <input type="text" name="user_id" class="form-control" placeholder="6670391476" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Username (optional)</label>
+                <input type="text" name="username" class="form-control" placeholder="@username">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Duration (weeks)</label>
+                <select name="weeks" class="form-select">
+                    <option value="1">1 week</option>
+                    <option value="2">2 weeks</option>
+                    <option value="4">1 month</option>
+                    <option value="12">3 months</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-plus me-1"></i> Add VIP
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Search -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-users me-2"></i>VIP Users</h5>
+        <form method="GET" class="d-flex" style="width:300px;">
+            <input type="text" name="search" class="form-control me-2" placeholder="Search user ID or username..." value="{{ search }}">
+            <button type="submit" class="btn btn-outline-light btn-sm"><i class="fas fa-search"></i></button>
+        </form>
+    </div>
+    <div class="card-body p-0">
+        {% if users %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Username</th>
+                        <th>Added</th>
+                        <th>Expires</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td><code>{{ u.user_id }}</code></td>
+                        <td>@{{ u.username }}</td>
+                        <td class="small">{{ u.added_date }}</td>
+                        <td class="small">{{ u.expiry_date }}</td>
+                        <td>
+                            <span class="badge badge-{{ u.status }}">
+                                {{ u.status|upper }}
+                            </span>
+                        </td>
+                        <td>
+                            <form method="POST" action="{{ url_for('toggle_vip', user_id=u.user_id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-{{ 'danger' if u.status == 'active' else 'success' }}" title="Toggle status">
+                                    <i class="fas fa-{{ 'pause' if u.status == 'active' else 'play' }}"></i>
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ url_for('remove_vip', user_id=u.user_id) }}" class="d-inline" onsubmit="return confirm('Remove this user?')">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center py-4 mb-0">No VIP users found. Add one above.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

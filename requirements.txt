@@ -1,0 +1,10 @@
+python-telegram-bot==21.6
+pytesseract==0.3.13
+Pillow==10.4.0
+requests==2.32.3
+flask>=3.0
+playwright>=1.40
+schedule>=1.2
+ddgs
+openai
+gunicorn>=21.0
