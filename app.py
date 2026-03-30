@@ -437,7 +437,7 @@ def refresh_fixtures():
 
 
 @app.route("/schedule/refresh_fotmob")
-def refresh_from_fotmob():
+def refresh_schedule_bg():
     import threading
     from core.weekly_runner import run_weekly_cycle
     

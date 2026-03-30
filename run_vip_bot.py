@@ -16,6 +16,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 def main():
+    import asyncio
+    asyncio.set_event_loop(asyncio.new_event_loop())
     logger.info("Starting VIP bot...")
     
     from telegram.ext import Application, CommandHandler, MessageHandler, filters
@@ -38,7 +40,7 @@ def main():
     # Note: handle_message doesn't exist in bot.py, removed
     
     logger.info("VIP bot handlers registered, starting polling...")
-    app.run_polling(drop_pending_updates=True, close_loop=False)
+    app.run_polling(drop_pending_updates=True, close_loop=False, stop_signals=None)
 
 if __name__ == "__main__":
     main()
