@@ -215,3 +215,221 @@ def _trim_message(message: str, slips: list[ConstructedSlip]) -> str:
         total += len(line) + 1
 
     return "\n".join(result)
+
+
+# =============================================================================
+# NEW: Concise format with tier ratings and search context
+# =============================================================================
+
+def format_concise_slip_message(
+    match_plays: dict,
+    slips: list,
+    match_tiers: dict = None,
+    search_results: dict = None,
+    analysis_id: str = None
+) -> str:
+    """
+    Format concise slip output with tier ratings and search context.
+    
+    Args:
+        match_plays: {match_key: [plays]}
+        slips: List of ConstructedSlip objects
+        match_tiers: {match_key: tier} - S/A/B/C
+        search_results: {match_key: search_data}
+        analysis_id: ID for /full_<id> command
+    
+    Returns:
+        Concise formatted message string
+    """
+    lines = []
+    
+    # Header
+    matched_count = len(match_plays)
+    search_status = "GLM-5 ✓" if search_results else "Odds-only"
+    lines.append("🎯 SLIP ANALYZER")
+    lines.append("━" * 28)
+    lines.append(f"Matched: {matched_count} games | {search_status}")
+    lines.append("")
+    
+    # Each slip tier
+    for slip in slips:
+        lines.extend(_format_concise_slip(slip, match_tiers, search_results))
+    
+    # Expert notes
+    if search_results:
+        lines.append("📊 EXPERT NOTES:")
+        notes = _generate_expert_notes(match_tiers, search_results)
+        for note in notes[:3]:
+            lines.append(f"• {note}")
+        lines.append("")
+    
+    # Full analysis link
+    if analysis_id:
+        lines.append(f"📖 /full_{analysis_id} — detailed analysis")
+    
+    # VIP CTA
+    lines.append("")
+    lines.append("💎 VIP: ₦500/week → Daily expert picks")
+    
+    message = "\n".join(lines)
+    
+    # Ensure within Telegram limit
+    if len(message) > MAX_TELEGRAM_CHARS:
+        message = message[:MAX_TELEGRAM_CHARS - 50] + "\n[...]"
+    
+    return message
+
+
+def _format_concise_slip(slip, match_tiers: dict = None, search_results: dict = None) -> list:
+    """Format a single slip in concise format."""
+    lines = []
+    
+    # Slip header
+    emoji = slip.emoji if hasattr(slip, 'emoji') else "📊"
+    win_pct = f"{slip.win_probability:.0f}%"
+    lines.append(f"{emoji} {slip.name} ({slip.total_odds:.2f}x | {win_pct} win)")
+    lines.append("─" * 28)
+    
+    # Picks
+    for pick in slip.picks:
+        match_name = pick.match_name
+        
+        # Add tier if available
+        tier = match_tiers.get(match_name, "C") if match_tiers else "C"
+        tier_display = f"({tier})"
+        
+        # Get short team names
+        if " vs " in match_name:
+            parts = match_name.split(" vs ")
+            short_name = f"{parts[0][:12]} vs {parts[1][:12]}"
+        else:
+            short_name = match_name[:25]
+        
+        # Odds and verdict emoji
+        odds = f"@{pick.odds:.2f}"
+        
+        # Verdict emoji based on confidence
+        if pick.base_prob >= 70:
+            verdict_emoji = "✅"
+        elif pick.base_prob >= 50:
+            verdict_emoji = "⚠️"
+        else:
+            verdict_emoji = "🔴"
+        
+        # Search context summary
+        search_note = ""
+        if search_results and match_name in search_results:
+            sr = search_results[match_name]
+            if sr.get("verdict") == "KEEP":
+                search_note = "✓"
+            elif sr.get("analysis_summary"):
+                summary = sr["analysis_summary"][:30]
+                search_note = f"({summary})"
+        
+        lines.append(f"├─ {short_name} {tier_display}")
+        lines.append(f"│  └ {pick.bet_label[:20]} {odds} {verdict_emoji} {search_note}")
+    
+    # Remove the last ├ and replace with └
+    if lines:
+        # Find last pick line
+        for i in range(len(lines) - 1, -1, -1):
+            if lines[i].startswith("├─"):
+                lines[i] = lines[i].replace("├─", "└─", 1)
+                break
+    
+    lines.append("")
+    return lines
+
+
+def _generate_expert_notes(match_tiers: dict, search_results: dict) -> list:
+    """Generate expert notes based on tiers and search results."""
+    notes = []
+    
+    if not match_tiers and not search_results:
+        return ["Analysis based on odds-only data"]
+    
+    # Tier distribution
+    tier_counts = {"S": 0, "A": 0, "B": 0, "C": 0}
+    for tier in (match_tiers or {}).values():
+        tier_counts[tier] = tier_counts.get(tier, 0) + 1
+    
+    # Notes based on tier distribution
+    if tier_counts.get("S", 0) > 0:
+        notes.append("Premium match(es) available — highest confidence")
+    if tier_counts.get("C", 0) > tier_counts.get("A", 0):
+        notes.append("Multiple risky matches — stake conservatively")
+    
+    # Notes from search results
+    friendly_count = 0
+    for match_key, sr in (search_results or {}).items():
+        league = sr.get("league", "")
+        if "friendly" in league.lower():
+            friendly_count += 1
+        verdict = sr.get("verdict", "")
+        if verdict == "KEEP":
+            notes.append(f"{match_key.split(' vs ')[0]} backed by strong form")
+    
+    if friendly_count > 0:
+        notes.append(f"{friendly_count} friendly match(es) — motivation unclear")
+    
+    return notes if notes else ["All picks analyzed with live search data"]
+
+
+def format_full_analysis_message(
+    match_plays: dict,
+    slips: list,
+    match_tiers: dict,
+    search_results: dict
+) -> str:
+    """
+    Format detailed analysis for /full_<id> command.
+    
+    Shows complete breakdown including:
+    - Full search context
+    - All available markets per match
+    - Tier classification reasoning
+    """
+    lines = []
+    
+    lines.append("📋 FULL ANALYSIS")
+    lines.append("=" * 30)
+    lines.append("")
+    
+    # Match details
+    for match_key, plays in match_plays.items():
+        tier = match_tiers.get(match_key, "C") if match_tiers else "C"
+        search = search_results.get(match_key, {}) if search_results else {}
+        
+        lines.append(f"🏓 {match_key} [{tier}]")
+        lines.append("-" * 25)
+        
+        # Search context
+        if search.get("search_context"):
+            ctx = search["search_context"][:200]
+            lines.append(f"🔍 Search: {ctx}...")
+        
+        # Form data
+        if search.get("form_home"):
+            lines.append(f"Form: {search.get('form_home', '?')} vs {search.get('form_away', '?')}")
+        
+        # Top 5 available plays
+        lines.append("Available markets:")
+        sorted_plays = sorted(plays, key=lambda p: p.get("score", 0), reverse=True)
+        for play in sorted_plays[:5]:
+            lines.append(f"  • {play.get('pick', '?')} @ {play.get('odds', 0):.2f} ({play.get('implied', 0):.0f}%)")
+        
+        lines.append("")
+    
+    # Slips summary
+    lines.append("📊 SLIP BREAKDOWN")
+    lines.append("=" * 30)
+    
+    for slip in slips:
+        lines.append(f"\n{slip.name} SLIP:")
+        lines.append(f"  Combined: {slip.total_odds:.2f}x")
+        lines.append(f"  Win Prob: {slip.win_probability:.1f}%")
+        lines.append(f"  Risk: {'⭐' * slip.risk_stars}")
+        for pick in slip.picks:
+            lines.append(f"  • {pick.match_name}: {pick.bet_label} @ {pick.odds:.2f}")
+    
+    return "\n".join(lines)

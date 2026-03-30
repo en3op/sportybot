@@ -44,6 +44,7 @@ from analysis_engine import (
 from slip_analyzer import analyze_slip as analyze_slip_v2
 from slip_analyzer import analyze_slip_with_events, get_match_names
 from slip_analyzer.search_analyzer import analyze_slip_with_search
+from slip_analyzer.analyzer import analyze_slip_enhanced, get_full_analysis, cleanup_old_analyses
 
 # =============================================================================
 # CONFIGURATION
@@ -1126,10 +1127,41 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             )
             return
 
-        # Build 3 slips
-        result = analyze_slip_with_events(match_plays)
+        # Use enhanced analyzer with search and tier classification
+        match_info = {}
+        for display_name in match_plays.keys():
+            # Try to get league from events
+            for event in events:
+                ev_name = f"{event.get('home', '')} vs {event.get('away', '')}"
+                if ev_name == display_name:
+                    match_info[display_name] = {
+                        "home": event.get("home", ""),
+                        "away": event.get("away", ""),
+                        "league": event.get("league", "")
+                    }
+                    break
+
+        # Progress callback for search
+        search_progress_shown = []
+        def progress_callback(current, total, match_key):
+            if match_key not in search_progress_shown:
+                search_progress_shown.append(match_key)
+                # Update progress message (will be done synchronously)
+
+        # Run enhanced analysis
+        result, analysis_id = analyze_slip_enhanced(
+            match_plays=match_plays,
+            match_info=match_info,
+            use_search=True,
+            progress_callback=progress_callback
+        )
+
+        # Store analysis_id in context for /full command
+        if analysis_id:
+            context.user_data["last_analysis_id"] = analysis_id
+
         await progress_msg.delete()
-        await update.message.reply_text(result)
+        await update.message.reply_text(result, parse_mode="Markdown")
 
     except Exception as e:
         logger.error(f"Error processing photo: {e}", exc_info=True)
@@ -1219,6 +1251,57 @@ async def cmd_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         parse_mode="Markdown"
     )
     context.user_data["search_mode"] = True
+
+
+async def cmd_full(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /full_<id> — show detailed analysis."""
+    if not await _ensure_private(update):
+        return
+
+    # Get analysis ID from command args or last analysis
+    args = context.args if context.args else []
+    
+    if args:
+        analysis_id = args[0].strip()
+    else:
+        # Use last analysis ID
+        analysis_id = context.user_data.get("last_analysis_id")
+    
+    if not analysis_id:
+        await update.message.reply_text(
+            "\u274c No analysis found.\n\n"
+            "Send a slip photo first, then use /full to see detailed analysis."
+        )
+        return
+    
+    # Get full analysis
+    full_result = get_full_analysis(analysis_id)
+    
+    if "not found" in full_result.lower():
+        await update.message.reply_text(full_result)
+        return
+    
+    # Send as multiple messages if too long
+    if len(full_result) > 3500:
+        # Split into chunks
+        chunks = []
+        current = ""
+        for line in full_result.split("\n"):
+            if len(current) + len(line) + 1 > 3500:
+                chunks.append(current)
+                current = line + "\n"
+            else:
+                current += line + "\n"
+        if current:
+            chunks.append(current)
+        
+        for i, chunk in enumerate(chunks):
+            if i == 0:
+                await update.message.reply_text(f"\U0001f4d6 Full Analysis (Part {i+1}/{len(chunks)})\n\n{chunk}")
+            else:
+                await update.message.reply_text(f"Part {i+1}/{len(chunks)}\n\n{chunk}")
+    else:
+        await update.message.reply_text(f"\U0001f4d6 Full Analysis\n\n{full_result}")
 
 
 async def handle_search_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1391,9 +1474,13 @@ def main() -> None:
     app.add_handler(CommandHandler("pool", cmd_pool))
     app.add_handler(CommandHandler("scan", cmd_scan))
     app.add_handler(CommandHandler("search", cmd_search))
+    app.add_handler(CommandHandler("full", cmd_full))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_analyze_text))
     app.add_handler(MessageHandler(filters.PHOTO & ~filters.COMMAND, handle_photo))
     app.add_error_handler(error_handler)
+
+    # Cleanup old analyses periodically
+    cleanup_old_analyses(max_age_hours=24)
 
     logger.info("SportyBot Free is starting...")
     print("SportyBot Free is running. Press Ctrl+C to stop.")

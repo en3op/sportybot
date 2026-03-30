@@ -1,3 +1,3 @@
 web: python app.py
-bot: python bot.py
-freebot: python free_bot.py
+bot: python run_vip_bot.py
+freebot: python run_free_bot.py
