@@ -108,39 +108,58 @@ def _configure_tesseract() -> None:
         pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD
 
 
+def _run_ocr_with_timeout(img, config="--psm 4", timeout=15):
+    """Run Tesseract with a timeout to prevent hanging on slow servers."""
+    from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(pytesseract.image_to_string, img, config=config)
+        try:
+            return future.result(timeout=timeout)
+        except FuturesTimeout:
+            logger.warning(f"OCR timed out after {timeout}s")
+            return ""
+        except Exception as e:
+            logger.warning(f"OCR error: {e}")
+            return ""
+
+
 def extract_text_from_image(image_path: str) -> str:
     """Run Tesseract OCR on an image file and return extracted text.
     
     Tries the best single approach first, falls back to binarized if empty.
+    Includes a timeout to prevent hanging on low-resource servers.
     """
     _configure_tesseract()
     img = Image.open(image_path)
     img = img.convert("L")
     w, h = img.size
-    if w < 1000:
-        scale = 1000 / w
+    
+    # Cap image width at 1200px to keep OCR fast on free-tier servers
+    if w > 1200:
+        scale = 1200 / w
+        img = img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
+    elif w < 800:
+        scale = 800 / w
         img = img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
 
     # Primary: raw grayscale (best for dark-themed apps like SportyBet)
-    try:
-        text = pytesseract.image_to_string(img, config="--psm 4")
-        if text.strip() and len(text.strip()) > 10:
-            logger.info(f"OCR primary ({len(text)} chars): {text[:300]!r}")
-            return text
-    except Exception:
-        pass
+    text = _run_ocr_with_timeout(img, config="--psm 4", timeout=15)
+    if text.strip() and len(text.strip()) > 10:
+        logger.info(f"OCR primary ({len(text)} chars): {text[:300]!r}")
+        return text
 
     # Fallback: binarized
     try:
         img2 = img.point(lambda x: 255 if x > 180 else 0, "1")
-        text = pytesseract.image_to_string(img2, config="--psm 6")
-        logger.info(f"OCR fallback ({len(text)} chars): {text[:300]!r}")
-        return text
+        text = _run_ocr_with_timeout(img2, config="--psm 6", timeout=10)
+        if text.strip():
+            logger.info(f"OCR fallback ({len(text)} chars): {text[:300]!r}")
+            return text
     except Exception:
         pass
 
     # Last resort
-    text = pytesseract.image_to_string(img, config="--psm 6")
+    text = _run_ocr_with_timeout(img, config="--psm 6", timeout=10)
     logger.info(f"OCR last-resort ({len(text)} chars): {text[:300]!r}")
     return text
 
