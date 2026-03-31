@@ -40,7 +40,7 @@ def main():
     # Note: handle_message doesn't exist in bot.py, removed
     
     logger.info("VIP bot handlers registered, starting polling...")
-    app.run_polling(drop_pending_updates=True, close_loop=False, stop_signals=None)
+    app.run_polling(drop_pending_updates=False, stop_signals=None)
 
 if __name__ == "__main__":
     main()
