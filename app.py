@@ -14,7 +14,7 @@ from pathlib import Path
 import requests
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 
-from sportybet_scraper import fetch_upcoming_events, generate_daily_picks
+
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -113,8 +113,12 @@ def dashboard():
         "SELECT * FROM messages_log ORDER BY id DESC LIMIT 5"
     ).fetchall()
 
-    events = fetch_upcoming_events(page_size=100, today_only=True)
-    fixtures_count = len(events)
+    try:
+        from sportybet_scraper import fetch_upcoming_events
+        events = fetch_upcoming_events(page_size=100, today_only=True)
+        fixtures_count = len(events)
+    except Exception:
+        fixtures_count = 0
 
     # Check for pending pipeline output
     pending_slips = _get_pending_output()
