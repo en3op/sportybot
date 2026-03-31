@@ -119,14 +119,14 @@ def _high_criteria(plays: list[dict]) -> dict | None:
 # =============================================================================
 
 # Target combined odds per tier
-SAFE_TARGET_ODDS = (2.0, 3.5)      # 2-3x combined
-MODERATE_TARGET_ODDS = (4.5, 8.0)  # 5-7x combined  
-HIGH_TARGET_ODDS = (8.0, 15.0)     # 9-12x combined
+SAFE_TARGET_ODDS = (2.8, 3.5)      # 2.8 - 3.5x combined
+MODERATE_TARGET_ODDS = (4.5, 6.0)  # 4.5 - 6.0x combined
+HIGH_TARGET_ODDS = (9.0, 12.0)     # 9.0 - 12.0x combined
 
 # Preferred markets per tier
-SAFE_MARKETS = ["Handicap", "Double Chance", "Goals", "DNB"]  # Safest markets
-MODERATE_MARKETS = ["1X2", "BTTS", "Goals"]                    # Balanced markets
-HIGH_MARKETS = ["1X2"]                                          # Straight results for max odds
+SAFE_MARKETS = ["Double Chance", "Handicap", "Goals", "DNB", "Clean Sheet"]
+MODERATE_MARKETS = ["1X2", "BTTS", "Goals", "Multi Goals", "Win Either Half"]
+HIGH_MARKETS = ["1X2", "Correct Score", "Winning Margin", "Handicap", "Draw"]
 
 
 def _safe_criteria_target(plays: list[dict], current_odds: float = 1.0, target_min: float = 2.0, target_max: float = 3.5) -> dict | None:
@@ -158,7 +158,7 @@ def _safe_criteria_target(plays: list[dict], current_odds: float = 1.0, target_m
     return pool[0]
 
 
-def _moderate_criteria_target(plays: list[dict], current_odds: float = 1.0, target_min: float = 4.5, target_max: float = 8.0) -> dict | None:
+def _moderate_criteria_target(plays: list[dict], current_odds: float = 1.0, target_min: float = 4.5, target_max: float = 6.0) -> dict | None:
     """
     Pick a play that contributes to MODERATE target odds (5-7x combined).
     
@@ -189,7 +189,7 @@ def _moderate_criteria_target(plays: list[dict], current_odds: float = 1.0, targ
     return pool[0]
 
 
-def _high_criteria_target(plays: list[dict], current_odds: float = 1.0, target_min: float = 8.0, target_max: float = 15.0) -> dict | None:
+def _high_criteria_target(plays: list[dict], current_odds: float = 1.0, target_min: float = 9.0, target_max: float = 12.0) -> dict | None:
     """
     Pick a play that contributes to HIGH target odds (9-12x combined).
     

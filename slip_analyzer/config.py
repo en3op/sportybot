@@ -103,27 +103,27 @@ class SlipTier:
 
 
 SAFE_SLIP = SlipTier(
-    name="SAFE", emoji="\U0001f512",
-    min_score=0, max_individual_odds=2.00,
-    total_odds_target=(2.0, 5.0), pick_count=(3, 8),
+    name="SAFE", emoji="🔒",
+    min_score=0, max_individual_odds=1.80,
+    total_odds_target=(2.8, 3.5), pick_count=(3, 6),
     max_risk_stars=5, bankroll_pct="3-5%",
-    philosophy="Best picks from your slip, lowest individual risk",
+    philosophy="Professional conservative accumulation. Focus on high-probability markets like DC, Over 1.5, and DNB. Goal: 2.8x - 3.5x returns.",
 )
 
 MODERATE_SLIP = SlipTier(
-    name="MODERATE", emoji="\u2696\ufe0f",
-    min_score=0, max_individual_odds=3.00,
-    total_odds_target=(3.0, 10.0), pick_count=(3, 8),
+    name="MODERATE", emoji="⚖️",
+    min_score=0, max_individual_odds=2.50,
+    total_odds_target=(4.5, 6.0), pick_count=(3, 6),
     max_risk_stars=5, bankroll_pct="2-3%",
-    philosophy="Balanced risk/reward from your games",
+    philosophy="Balanced technical play. Mixes 1X2 value with strategic goal lines. Goal: 4.5x - 6.0x returns.",
 )
 
 HIGH_SLIP = SlipTier(
-    name="HIGH", emoji="\U0001f680",
+    name="HIGH", emoji="🚀",
     min_score=0, max_individual_odds=5.00,
-    total_odds_target=(5.0, 50.0), pick_count=(3, 8),
-    max_risk_stars=5, bankroll_pct="1-2%",
-    philosophy="High reward picks from your games — all or nothing",
+    total_odds_target=(9.0, 12.0), pick_count=(3, 6),
+    max_risk_stars=5, bankroll_pct="1%",
+    philosophy="Aggressive edge spotting. High-odds results, straight draws, and underdog spreads. Goal: 9.0x - 12.0x returns.",
 )
 
 SLIP_TIERS = [SAFE_SLIP, MODERATE_SLIP, HIGH_SLIP]

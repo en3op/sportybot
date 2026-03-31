@@ -501,10 +501,15 @@ You are an expert football betting analyst. Analyze the following search data fo
 {context}
 
 ## YOUR TASK:
-Suggest exactly 3 plays for this match:
-1. SAFE - Highest probability (e.g. Double Chance, Over 1.5, DNB). Target odds: 1.20 - 1.50.
-2. MODERATE - Balanced value (e.g. 1X2 favorite, BTTS, Over 2.5). Target odds: 1.60 - 2.20.
-3. HIGH - Aggressive play (e.g. Underdog win, Correct Score, 1X2 Draw). Target odds: 2.50 - 5.00.
+Suggest exactly 3 professional plays for this match:
+1. SAFE - Technical accumulation. (Double Chance, Over 1.5, DNB, Clean Sheet). Target odds: 1.15 - 1.45.
+2. MODERATE - Market value play. (1X2 results, BTTS, Multi-Goals, Win Either Half). Target odds: 1.50 - 2.50.
+3. HIGH - High-edge aggressive play. (Handicap spreads, Correct Score, Winning Margin, Draw). Target odds: 2.50 - 6.00.
+
+## STRATEGY RULES:
+- Avoid basic 'Home Win' or 'Draw' if better value exists in creative markets.
+- Think like a pro punter with 10 years experience: look for hidden patterns (e.g. away team scoring first, tight low-scoring games).
+- Use SportyBet's diverse markets: Handicap, Corner lines, Multi-Goals, Goal Intervals.
 
 For each play, you MUST estimate "Fair Odds" based on the probability you see in the data.
 
