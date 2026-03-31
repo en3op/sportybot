@@ -1108,114 +1108,21 @@ async def handle_analyze_text(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle photo uploads — OCR → match teams against SportyBet → build 3 slips."""
+    """Handle photo uploads — Notify user to use text input because OCR is disabled."""
     if not await _ensure_private(update):
         return
 
-    # Check if in search mode
-    if context.user_data.get("search_mode"):
-        context.user_data["search_mode"] = False
-        await handle_search_photo(update, context)
-        return
-
-    context.user_data["awaiting_analyze"] = False
-    progress_msg = await update.message.reply_text("\u23f3 Reading your slip...")
-
-    # Download the photo
-    photo = update.message.photo[-1]
-    file = await context.bot.get_file(photo.file_id)
-
-    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
-        tmp_path = tmp.name
-        await file.download_to_drive(tmp_path)
-
-    try:
-        # OCR
-        await _safe_edit(progress_msg, "\u23f3 Extracting text from image...")
-        extracted_text = extract_text_from_image(tmp_path)
-
-        if not extracted_text.strip():
-            await _safe_edit(progress_msg,
-                "\u274c Could not extract any text from the image.\n"
-                "Try sending the slip as text instead:\n"
-                "`Man City vs Arsenal\nLiverpool vs Chelsea`"
-            )
-            return
-
-        logger.info(f"OCR raw text:\n{extracted_text}")
-
-        # Extract all potential team names from the OCR
-        potential_teams = _extract_potential_teams(extracted_text)
-        logger.info(f"Potential teams from OCR: {potential_teams}")
-
-        # Also try "Team vs Team" patterns
-        match_pairs = get_match_names(extracted_text)
-        logger.info(f"Team pairs from OCR: {match_pairs}")
-
-        if not potential_teams and not match_pairs:
-            # Show user what OCR found
-            clean_text = extracted_text.strip()[:300]
-            await _safe_edit(progress_msg,
-                f"\u274c Could not find team names in the image.\n\n"
-                f"OCR text:\n```\n{clean_text}\n```\n\n"
-                f"Try sending your picks as text:\n"
-                f"`Man City vs Arsenal\nLiverpool vs Chelsea`"
-            )
-            return
-
-        # SKIP SportyBet: Go straight to web search analysis for all detected matches
-        match_info = {}
-        match_plays = {}
-        
-        # Populate analysis queue from extracted match pairs
-        for t1, t2 in match_pairs:
-            match_key = f"{t1} vs {t2}"
-            if match_key not in match_info:
-                match_info[match_key] = {"home": t1, "away": t2, "league": "Unknown"}
-            if match_key not in match_plays:
-                match_plays[match_key] = [] # Empty list tells analyzer to use AI prediction
-
-        # Progress callback for search
-        search_progress_shown = []
-        def progress_callback(current, total, match_key):
-            if match_key not in search_progress_shown:
-                search_progress_shown.append(match_key)
-                # Note: could edit progress_msg here if desired
-
-        # Run enhanced analysis (even if 0-1 matches found)
-        result, analysis_id = analyze_slip_enhanced(
-            match_plays=match_plays,
-            match_info=match_info,
-            use_search=True,
-            progress_callback=progress_callback
-        )
-
-        # Store analysis_id in context for /full command
-        if analysis_id:
-            context.user_data["last_analysis_id"] = analysis_id
-
-        await progress_msg.delete()
-        await update.message.reply_text(result, parse_mode="Markdown")
-
-    except Exception as e:
-        logger.error(f"Error processing photo: {e}", exc_info=True)
-        error_msg = (
-            "⚠️ An error occurred while processing your slip image.\n\n"
-            "**Possible causes:**\n"
-            "• Image too large or blurry\n"
-            "• Server load too high for OCR\n\n"
-            "**Fastest Fix:**\n"
-            "Please **type** the match names and send them as a message instead. For example:\n"
-            "`Man City vs Arsenal`"
-        )
-        if 'progress_msg' in locals():
-            await _safe_edit(progress_msg, error_msg)
-        else:
-            await update.message.reply_text(error_msg, parse_mode="Markdown")
-
-    finally:
-        if os.path.exists(tmp_path):
-            os.remove(tmp_path)
+    msg = (
+        "📸 *Photo Analysis is Disabled*\n\n"
+        "To provide faster and more accurate results with the **Professional AI Engine**, "
+        "please paste your matches as text instead.\n\n"
+        "*Example:*\n"
+        "`Man City vs Arsenal\n"
+        "Liverpool vs Chelsea`\n\n"
+        "I will search for live data and build your professional slips instantly!"
+    )
+    await update.message.reply_text(msg, parse_mode="Markdown")
+    return
 
 
 # =============================================================================

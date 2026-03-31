@@ -4,12 +4,9 @@ FROM python:3.11-slim
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PORT=5000
-ENV TESSDATA_PREFIX=/usr/share/tesseract-ocr/5/tessdata/
 
-# 1. Install system dependencies (Heavy layer - cached)
+# 1. Install system dependencies (Lighter layer)
 RUN apt-get update && apt-get install -y \
-    tesseract-ocr \
-    libtesseract-dev \
     libgl1 \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
