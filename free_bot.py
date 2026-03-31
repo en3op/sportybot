@@ -1134,17 +1134,6 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             )
             return
 
-        # Check if we have enough matches
-        if len(match_plays) < 2:
-            matched = list(match_plays.keys())[0] if match_plays else "Unknown"
-            await _safe_edit(progress_msg,
-                f"\u26a0\ufe0f Only 1 match found: {matched}\n\n"
-                f"I need at least 2 matches to build slip combinations.\n\n"
-                f"Your slip teams: {', '.join([f'{t1} vs {t2}' for t1, t2 in match_pairs])}\n\n"
-                f"These matches may have already started or are not on SportyBet."
-            )
-            return
-
         # Use enhanced analyzer with search and tier classification
         match_info = {}
         for display_name in match_plays.keys():
@@ -1158,15 +1147,25 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                         "league": event.get("league", "")
                     }
                     break
+        
+        # Also add info for matches that failed to get plays from SportyBet
+        # so AI can still search for them
+        for t1, t2 in match_pairs:
+            match_key = f"{t1} vs {t2}"
+            if match_key not in match_plays:
+                # Add placeholder to allow search_analyzer to pick it up
+                match_info[match_key] = {"home": t1, "away": t2, "league": "Unknown"}
+                if match_key not in match_plays:
+                    match_plays[match_key] = [] # Empty list of plays tells analyzer to rely on search
 
         # Progress callback for search
         search_progress_shown = []
         def progress_callback(current, total, match_key):
             if match_key not in search_progress_shown:
                 search_progress_shown.append(match_key)
-                # Update progress message (will be done synchronously)
+                # Note: could edit progress_msg here if desired
 
-        # Run enhanced analysis
+        # Run enhanced analysis (even if 0-1 matches found)
         result, analysis_id = analyze_slip_enhanced(
             match_plays=match_plays,
             match_info=match_info,
@@ -1183,9 +1182,13 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     except Exception as e:
         logger.error(f"Error processing photo: {e}", exc_info=True)
-        await _safe_edit(progress_msg,
-            "An error occurred while processing your slip. Please try again."
-        )
+        if 'progress_msg' in locals():
+            await _safe_edit(progress_msg,
+                "An error occurred while processing your slip. Please try again."
+            )
+        else:
+            await update.message.reply_text("An error occurred while processing your slip.")
+
     finally:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
