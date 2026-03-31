@@ -1012,20 +1012,18 @@ async def cmd_analyze(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         # Extract match pairs from text
         match_pairs = get_match_names(raw_text)
         if not match_pairs:
-            # Try splitting by lines if vs pattern not found
             lines = [l.strip() for l in raw_text.split('\n') if l.strip()]
-            if len(lines) >= 1:
-                # Mock a vs pair for search if only one team name is given
-                for line in lines:
-                    if "vs" not in line.lower():
-                        match_pairs.append((line, "Unknown Opponent"))
-                    else:
-                        parts = re.split(r'\bvs?\.?\b', line, flags=re.IGNORECASE)
-                        if len(parts) >= 2:
-                            match_pairs.append((parts[0].strip(), parts[1].strip()))
+            for line in lines:
+                if "vs" not in line.lower():
+                    if len(line) > 3:
+                        match_pairs.append((line, "TBD"))
+                else:
+                    parts = re.split(r'\bvs?\.?\b', line, flags=re.IGNORECASE)
+                    if len(parts) >= 2:
+                        match_pairs.append((parts[0].strip(), parts[1].strip()))
 
         if not match_pairs:
-            await progress.edit_text("❌ Could not identify any matches in your text. Please use 'Team A vs Team B' format.")
+            await progress.edit_text("❌ Could not identify any matches. Use 'Team A vs Team B' format.")
             return
 
         match_info = {}
@@ -1035,8 +1033,11 @@ async def cmd_analyze(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             match_info[match_key] = {"home": t1, "away": t2, "league": "Unknown"}
             match_plays[match_key] = []
 
-        # Run professional analysis
-        result, analysis_id = analyze_slip_enhanced(match_plays, match_info, use_search=True)
+        import asyncio
+        # Run in thread pool to avoid blocking the event loop
+        result, analysis_id = await asyncio.to_thread(
+            analyze_slip_enhanced, match_plays, match_info, True
+        )
         
         if analysis_id:
             context.user_data["last_analysis_id"] = analysis_id
@@ -1046,7 +1047,7 @@ async def cmd_analyze(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         
     except Exception as e:
         logger.error(f"Error analyzing custom text: {e}", exc_info=True)
-        await progress.edit_text(f"❌ Error analysis failed: {str(e)}")
+        await progress.edit_text(f"❌ Error: {str(e)}")
 
 
 async def handle_analyze_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1077,7 +1078,6 @@ async def handle_analyze_text(update: Update, context: ContextTypes.DEFAULT_TYPE
     try:
         match_pairs = get_match_names(raw_text)
         if not match_pairs:
-            # Fallback for simple team lists
             lines = [l.strip() for l in raw_text.split('\n') if l.strip()]
             for line in lines:
                 if "vs" in line.lower():
@@ -1085,7 +1085,12 @@ async def handle_analyze_text(update: Update, context: ContextTypes.DEFAULT_TYPE
                     if len(parts) >= 2:
                         match_pairs.append((parts[0].strip(), parts[1].strip()))
                 else:
-                    match_pairs.append((line, "Unknown Opponent"))
+                    if len(line) > 3:
+                        match_pairs.append((line, "TBD"))
+
+        if not match_pairs:
+            await progress.edit_text("❌ No matches detected. Use 'Team A vs Team B' format.")
+            return
 
         match_info = {}
         match_plays = {}
@@ -1094,7 +1099,11 @@ async def handle_analyze_text(update: Update, context: ContextTypes.DEFAULT_TYPE
             match_info[match_key] = {"home": t1, "away": t2, "league": "Unknown"}
             match_plays[match_key] = []
 
-        result, analysis_id = analyze_slip_enhanced(match_plays, match_info, use_search=True)
+        import asyncio
+        # Run in thread pool to avoid blocking the async event loop
+        result, analysis_id = await asyncio.to_thread(
+            analyze_slip_enhanced, match_plays, match_info, True
+        )
         
         if analysis_id:
             context.user_data["last_analysis_id"] = analysis_id
