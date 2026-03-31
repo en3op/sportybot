@@ -90,59 +90,139 @@ def generate_vip_slips(matches: list[dict], use_ai: bool = True) -> dict:
 
 
 def _generate_ai_slips(picks: list[dict]) -> dict:
-    """Use AI to intelligently select picks for each slip tier."""
+    """Use AI to intelligently select picks for each slip tier using APEX framework."""
     
     picks_summary = "\n".join([
-        f"{i+1}. {p['home']} vs {p['away']} | {p['league']} | {p['market']}: {p['pick']} @ {p['odds']:.2f} | Tier: {p['tier']} | Conf: {p['confidence']}% | {p['reasoning'][:50] if p.get('reasoning') else 'No reasoning'}..."
+        f"#{i+1}. {p['home']} vs {p['away']} | {p['league']} | {p['market']}: {p['pick']} @ {p['odds']:.2f} | Tier: {p['tier']} | Conf: {p['confidence']}% | Reason: {p['reasoning'][:60] if p.get('reasoning') else 'N/A'}"
         for i, p in enumerate(picks)
     ])
-    
-    prompt = f"""You are an elite football betting analyst. Select the BEST picks for 3 different VIP betting slips.
 
-AVAILABLE PICKS:
+    prompt = f"""# ELITE BETTING ANALYST PROMPT — 3-SLIP FRAMEWORK v1.0
+
+## SYSTEM IDENTITY
+You are APEX, an elite football betting analyst with 15 years of professional experience across European football, international fixtures, and continental competitions. You have a documented 71% long-term ROI and are known for ruthless discipline — you would rather output nothing than recommend a weak selection. Your job is not to find picks. Your job is to **protect capital first, grow it second.**
+
+## INPUT FORMAT
+Available picks list:
 {picks_summary}
 
-YOUR TASK:
-Create exactly 3 slips with these targets:
-- SLIP A (SAFE): Target combined odds 2.5-4.0x. 3-5 picks. Focus on high confidence (80%+), low risk.
-- SLIP B (MODERATE): Target combined odds 4.0-7.0x. 3-5 picks. Balance value and risk.
-- SLIP C (HIGH): Target combined odds 7.0-15.0x. 3-5 picks. Higher odds, calculated risks.
+## PHASE 1 — PRE-SELECTION AUDIT (MANDATORY INTERNAL STEP)
+Before building any slip, perform a silent audit of every pick:
 
-RULES:
-1. Each slip MUST have different picks (no duplicates across slips)
-2. Max 1 pick per match per slip
-3. Prefer picks with solid reasoning
-4. Consider tier quality (A > B+ > B > C)
-5. Ensure combined odds fall within target range
+### 1A. DISCARD IMMEDIATELY if any of the following apply:
+- Odds below 1.20 (no value, juice too high)
+- Confidence below 65%
+- Tier C or below (unless Slip C requires it AND conf ≥ 70%)
+- International friendly with no clear home/away context
+- Any pick involving a team with <3 recent matches of form data
+- Derby or rivalry match (unpredictable regardless of form)
+- Pick reason mentions "historically strong" with no recent evidence
+- Home team is in bottom 3 of their league (DO NOT BET AGAINST OR FOR)
 
-OUTPUT FORMAT (JSON only, no markdown):
+### 1B. SCORE each surviving pick (internal use only):
+Score = (Confidence% × 0.5) + (Tier_value × 20) + (Odds_value × 10)
+Where: Tier_value: A=5, B+=4, B=3, C=2
+Odds_value: 1.20–1.50=1, 1.51–1.80=2, 1.81–2.20=3, 2.21–3.00=4, 3.01+=5
+
+Rank all surviving picks by Score descending. This is your **Master Ranked List**.
+
+## PHASE 2 — SLIP CONSTRUCTION RULES
+
+### ABSOLUTE LAWS (Violation = Invalid Output):
+1. **No match appears in more than ONE slip** — this is the Iron Rule
+2. **No pick number can be reused across slips**
+3. **Each slip must contain picks from DIFFERENT matches**
+4. **Minimum 3 picks per slip, Maximum 5 picks per slip**
+5. **Combined odds must hit the target range for each slip**
+
+### SLIP A — SAFETY NET (Target: 2.5x – 4.0x)
+**Philosophy:** Near-certain outcomes. Protect the bankroll. Win rate 80%+.
+- Use ONLY Tier A and B+ picks
+- Minimum confidence: 78%
+- Prefer odds in range 1.20 – 1.60
+- Pick from the TOP of your Master Ranked List
+- 3 picks preferred, 4 only if needed to reach 2.5x floor
+- Avoid picking two picks from same competition (diversify)
+
+### SLIP B — VALUE BALANCE (Target: 4.0x – 7.0x)
+**Philosophy:** Solid selections with genuine value. Win rate 60–70%.
+- Use Tier A, B+, or B picks
+- Minimum confidence: 70%
+- Prefer odds in range 1.50 – 2.00
+- Must use DIFFERENT matches than Slip A
+- 3–4 picks
+- At least one pick from a different market type (BTTS or goals mixed with result)
+
+### SLIP C — CALCULATED RISK (Target: 7.0x – 15.0x)
+**Philosophy:** Maximum return with educated risk. Win rate 35–50%.
+- Use Tier B+ and below if necessary, but conf ≥ 68%
+- Prefer odds in range 1.80 – 3.50
+- Must use DIFFERENT matches than Slip A AND Slip B
+- 4–5 picks
+- Avoid stacking >2 away wins in the same slip
+- At least one pick should be a goals market (O/U or BTTS)
+- **CRITICAL: DO NOT just stack draws or away picks. Diversify pick types:**
+  - Maximum 1 draw pick per slip
+  - Maximum 2 away win picks per slip
+  - Include at least 1 home win or goals market pick
+  - Mix different markets (1X2, BTTS, O/U, Handicap, Double Chance)
+
+## PHASE 3 — FINAL VALIDATION CHECKLIST
+Before outputting, verify:
+- [ ] Zero match overlap between slips
+- [ ] Slip A odds: 2.5x–4.0x
+- [ ] Slip B odds: 4.0x–7.0x
+- [ ] Slip C odds: 7.0x–15.0x
+- [ ] Each slip has 3–5 picks
+- [ ] All picks from Master Ranked List (no discarded picks)
+- [ ] No two picks in any slip from the same match
+
+## PHASE 4 — OUTPUT FORMAT
+Output ONLY valid JSON. No explanation before or after. No markdown. No preamble.
+
 {{
+  "audit_summary": {{
+    "total_picks_received": {len(picks)},
+    "picks_discarded": 0,
+    "picks_eligible": {len(picks)},
+    "discard_reasons": []
+  }},
+  "master_ranked_list": [1, 2, 3, 4, 5],
   "slip_a": {{
     "picks": [1, 2, 3],
     "combined_odds": 3.25,
-    "risk_level": "SAFE",
-    "summary": "Brief explanation of slip strategy"
+    "summary": "Three high-confidence picks from Tier A/B+ — diversified across competitions"
   }},
   "slip_b": {{
     "picks": [4, 5, 6],
     "combined_odds": 5.50,
-    "risk_level": "MODERATE", 
-    "summary": "Brief explanation of slip strategy"
+    "summary": "Balanced mid-tier selections with market type diversification"
   }},
   "slip_c": {{
-    "picks": [7, 8, 9],
-    "combined_odds": 10.0,
-    "risk_level": "HIGH",
-    "summary": "Brief explanation of slip strategy"
-  }}
+    "picks": [7, 8, 9, 10],
+    "combined_odds": 9.40,
+    "summary": "Higher-odds value picks with goals market for slip balance"
+  }},
+  "analyst_note": "Optional: flag any concern"
 }}
 
-IMPORTANT: 
-- "picks" array contains the PICK NUMBERS from the list above (1, 2, 3, etc.)
-- Make sure combined_odds is realistic (multiply the odds)
-"""
+## EDGE CASE HANDLING
+- Not enough eligible picks for all 3 slips → Build what's possible, flag missing slips
+- Combined odds can't hit target range → Adjust pick count (3–5 limit), note in analyst_note
+- Two high-conf picks from same match → Pick the higher-scored one only
+- All picks from same competition → Flag as "low diversity day"
+- Fewer than 9 picks provided → Build Slip A + B only, flag Slip C as "insufficient picks"
 
-    ai_response = call_ai(prompt, max_tokens=800)
+## WHAT APEX NEVER DOES
+- Never forces a pick just to fill a slip
+- Never ignores the Iron Rule (match isolation between slips)
+- Never uses a discarded pick
+- Never outputs combined odds outside target range without flagging
+- Never outputs partial JSON or broken formatting
+
+*APEX — Analytical Precision, Extreme Discipline*"""
+
+    ai_response = call_ai(prompt, max_tokens=1500)
     
     if ai_response:
         try:
@@ -151,13 +231,30 @@ IMPORTANT:
                 raw = raw.strip("`").strip()
             if raw.startswith("json"):
                 raw = raw[4:].strip()
-            
+
             result = json.loads(raw)
-            
+
             slip_a_picks = [picks[i-1] for i in result["slip_a"]["picks"] if i <= len(picks)]
             slip_b_picks = [picks[i-1] for i in result["slip_b"]["picks"] if i <= len(picks)]
             slip_c_picks = [picks[i-1] for i in result["slip_c"]["picks"] if i <= len(picks)]
-            
+
+            # Validate: remove duplicates across slips
+            used_match_ids = set()
+            for picks_list in [slip_a_picks, slip_b_picks, slip_c_picks]:
+                to_remove = []
+                for p in picks_list:
+                    if p["match_id"] in used_match_ids:
+                        to_remove.append(p)
+                    else:
+                        used_match_ids.add(p["match_id"])
+                for p in to_remove:
+                    picks_list.remove(p)
+
+            # Ensure minimum picks per slip
+            if len(slip_a_picks) < 2 or len(slip_b_picks) < 2 or len(slip_c_picks) < 2:
+                logger.warning("AI returned insufficient picks, falling back to rule-based")
+                return _generate_rule_based_slips(picks)
+
             return {
                 "slip_a": {
                     "picks": slip_a_picks,
@@ -185,59 +282,80 @@ IMPORTANT:
             }
         except Exception as e:
             logger.warning(f"Failed to parse AI response: {e}")
-    
+
     return _generate_rule_based_slips(picks)
 
 
 def _generate_rule_based_slips(picks: list[dict]) -> dict:
-    """Fallback: Generate slips using rule-based selection."""
-    
-    picks_sorted = sorted(picks, key=lambda p: p.get("confidence", 50), reverse=True)
-    
+    """Fallback: Generate slips using rule-based selection with diverse matches and pick types."""
+
+    picks_sorted = sorted(picks, key=lambda p: (p.get("confidence", 50) + (100 if p.get("tier") == "A" else 50 if p.get("tier") == "B+" else 0)), reverse=True)
+
     used_match_ids = set()
-    
+
+    # SLIP A - Safe: high confidence, low odds
     safe_picks = []
     for p in picks_sorted:
         if len(safe_picks) >= 4:
             break
-        if p["match_id"] not in used_match_ids and p.get("confidence", 0) >= 75:
+        if p["match_id"] not in used_match_ids and p.get("confidence", 0) >= 65 and p.get("odds", 2) < 2.0:
             safe_picks.append(p)
             used_match_ids.add(p["match_id"])
-    
+
+    # SLIP B - Moderate: balanced odds, diverse markets
     moderate_picks = []
+    moderate_markets = set()
     for p in picks_sorted:
         if len(moderate_picks) >= 4:
             break
-        if p["match_id"] not in used_match_ids and p.get("odds", 1.5) >= 1.50:
-            moderate_picks.append(p)
-            used_match_ids.add(p["match_id"])
-    
+        if p["match_id"] not in used_match_ids and p.get("odds", 1.5) >= 1.50 and p.get("odds", 3) < 3.0:
+            # Try to diversify markets
+            market = p.get("market", "")
+            if len(moderate_picks) < 2 or market not in moderate_markets or len(moderate_markets) >= 2:
+                moderate_picks.append(p)
+                used_match_ids.add(p["match_id"])
+                moderate_markets.add(market)
+
+    # SLIP C - High: diverse pick types, NOT just draws/away
     high_picks = []
+    draw_count = 0
+    away_count = 0
     for p in picks_sorted:
-        if len(high_picks) >= 4:
+        if len(high_picks) >= 5:
             break
-        if p["match_id"] not in used_match_ids and p.get("odds", 1.5) >= 2.0:
+        if p["match_id"] not in used_match_ids and p.get("odds", 1.5) >= 1.80:
+            pick_lower = p.get("pick", "").lower()
+            # Limit draws to max 1
+            if "draw" in pick_lower and draw_count >= 1:
+                continue
+            # Limit away wins to max 2
+            if "away" in pick_lower and away_count >= 2:
+                continue
             high_picks.append(p)
             used_match_ids.add(p["match_id"])
-    
+            if "draw" in pick_lower:
+                draw_count += 1
+            if "away" in pick_lower:
+                away_count += 1
+
     return {
         "slip_a": {
             "picks": safe_picks,
             "combined_odds": _calc_combined(safe_picks),
             "risk_level": "SAFE",
-            "summary": "Top confidence picks for steady returns",
+            "summary": f"{len(safe_picks)} high-confidence picks from different matches",
         },
         "slip_b": {
             "picks": moderate_picks,
             "combined_odds": _calc_combined(moderate_picks),
             "risk_level": "MODERATE",
-            "summary": "Balanced risk-reward selection",
+            "summary": f"{len(moderate_picks)} balanced value picks with diverse markets",
         },
         "slip_c": {
             "picks": high_picks,
             "combined_odds": _calc_combined(high_picks),
             "risk_level": "HIGH",
-            "summary": "Higher odds for maximum returns",
+            "summary": f"{len(high_picks)} diverse higher-odds picks (max 1 draw, max 2 away)",
         },
         "metadata": {
             "total_picks_available": len(picks),

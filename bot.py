@@ -486,11 +486,9 @@ async def analyze_match(fixture: dict, league_id: int):
 
 
 async def generate_safe_picks():
-    """Generate picks using SportyBet odds + SofaScore form + elite analysis."""
-    from sofascore_scraper import scrape_pregame_form
-    from elite_engine import TeamMetrics, analyze_match_edge
-    from research_agent import extract_market_signals, _form_from_ppg, _estimate_conceded
+    """Generate picks using SportyBet odds + APEX analysis system."""
     from sportybet_scraper import fetch_upcoming_events, analyze_all_markets
+    from core.vip_slip_engine import generate_vip_slips
 
     loop = asyncio.get_event_loop()
 
@@ -499,104 +497,84 @@ async def generate_safe_picks():
     if not events:
         return {"top_10": [], "slips": {"slip_a": [], "slip_b": [], "slip_c": [], "combined": {}}}
 
-    # Step 2: For each event, try SofaScore form scraping + elite analysis
-    edges = []
-    scraper_plays = []
-
-    for ev in events[:30]:
-        h = ev["home"]
-        a = ev["away"]
-        league = ev.get("league", "")
-        markets = ev.get("markets", {})
-        ox = markets.get("1X2", {})
-        home_odds = ox.get("Home", 0)
-        away_odds = ox.get("Away", 0)
-        draw_odds = ox.get("Draw", 0)
-
-        if not home_odds:
-            continue
-
-        # Also run the scraper's market analysis
+    # Step 2: Analyze all markets for each event
+    all_plays = []
+    for ev in events[:40]:
         analysis = await loop.run_in_executor(None, analyze_all_markets, ev)
         for play in analysis.get("plays", []):
             play["event_id"] = ev.get("event_id", "")
-            play["league"] = league
-            play["home"] = h
-            play["away"] = a
+            play["league"] = ev.get("league", "")
+            play["home"] = ev["home"]
+            play["away"] = ev["away"]
             play["start_time_ms"] = ev.get("start_time_ms", 0)
-            scraper_plays.append(play)
+            all_plays.append(play)
 
-        # Elite analysis using market signals
-        market = extract_market_signals({"Home": home_odds, "Draw": draw_odds, "Away": away_odds})
-        hm = TeamMetrics(
-            name=h, form=_form_from_ppg(market.get("home_form_ppg", 1.5)),
-            ppg=market.get("home_form_ppg", 1.5),
-            goals_scored_avg=market.get("home_form_ppg", 1.5),
-            goals_conceded_avg=_estimate_conceded(market.get("home_form_ppg", 1.5)),
-        )
-        am = TeamMetrics(
-            name=a, form=_form_from_ppg(market.get("away_form_ppg", 1.5)),
-            ppg=market.get("away_form_ppg", 1.5),
-            goals_scored_avg=market.get("away_form_ppg", 1.5),
-            goals_conceded_avg=_estimate_conceded(market.get("away_form_ppg", 1.5)),
-        )
-        edge = analyze_match_edge(hm, am, league, ev.get("start_time_ms", ""))
-        if edge:
-            edges.append(edge)
-
-    # Step 3: Combine scraper plays + elite edges
-    # Use scraper plays as primary (they're proven to work)
-    scraper_plays.sort(key=lambda p: p["score"], reverse=True)
-
-    # Select top plays with diversity
+    # Step 3: Sort by score and select top 15 with diversity
+    all_plays.sort(key=lambda p: p.get("score", 0), reverse=True)
+    
     top_10 = []
     match_count = {}
     market_count = {}
-    for play in scraper_plays:
+    for play in all_plays:
         eid = play.get("event_id", "")
-        mkt = play["market"]
+        mkt = play.get("market", "")
         if match_count.get(eid, 0) >= 2:
             continue
-        if market_count.get(mkt, 0) >= 3:
+        if market_count.get(mkt, 0) >= 4:
             continue
         top_10.append(play)
         match_count[eid] = match_count.get(eid, 0) + 1
         market_count[mkt] = market_count.get(mkt, 0) + 1
-        if len(top_10) >= 10:
+        if len(top_10) >= 15:
             break
 
-    # Build slips
-    import functools
-    slips = {"a": [], "b": [], "c": []}
-    used = set()
+    # Step 4: Prepare matches for APEX slip generation
+    matches_by_id = {}
+    for play in top_10:
+        eid = play.get("event_id", "")
+        if eid not in matches_by_id:
+            matches_by_id[eid] = {
+                "match_id": eid,
+                "home_team": play["home"],
+                "away_team": play["away"],
+                "league": play.get("league", ""),
+                "match_date": datetime.fromtimestamp(play.get("start_time_ms", 0) / 1000).isoformat() if play.get("start_time_ms") else "",
+                "predictions": []
+            }
+        matches_by_id[eid]["predictions"].append({
+            "market": play.get("market", ""),
+            "pick": play.get("pick_short", play.get("pick", "")),
+            "odds": play.get("odds", 1.85),
+            "confidence": play.get("implied", 75),
+            "risk_tier": play.get("tier", "B"),
+            "reasoning": play.get("reason", ""),
+        })
 
-    def fill(key, target_max, max_legs):
-        for play in top_10:
-            if len(slips[key]) >= max_legs:
-                break
-            if play.get("event_id", "") in used:
-                continue
-            current = functools.reduce(lambda x, y: x * y, [p["odds"] for p in slips[key]], 1.0)
-            if current * play["odds"] > target_max * 1.8:
-                continue
-            slips[key].append(play)
-            used.add(play.get("event_id", ""))
+    match_list = list(matches_by_id.values())
 
-    fill("a", 3.0, 2)
-    fill("b", 7.0, 3)
-    fill("c", 11.0, 5)
+    # Step 5: Generate slips using APEX system
+    apex_result = generate_vip_slips(match_list, use_ai=True)
 
-    combined = {}
-    for key in ["a", "b", "c"]:
-        if slips[key]:
-            combined[key] = round(functools.reduce(lambda x, y: x * y, [p["odds"] for p in slips[key]], 1.0), 2)
-        else:
-            combined[key] = 0
+    # Step 6: Format for VIP bot response
+    slip_a = apex_result["slip_a"]["picks"]
+    slip_b = apex_result["slip_b"]["picks"]
+    slip_c = apex_result["slip_c"]["picks"]
+
+    combined = {
+        "a": apex_result["slip_a"]["combined_odds"],
+        "b": apex_result["slip_b"]["combined_odds"],
+        "c": apex_result["slip_c"]["combined_odds"],
+    }
 
     return {
-        "top_10": top_10,
-        "slips": {"slip_a": slips["a"], "slip_b": slips["b"], "slip_c": slips["c"], "combined": combined},
-        "elite_edges": len(edges),
+        "top_10": top_10[:10],
+        "slips": {
+            "slip_a": slip_a,
+            "slip_b": slip_b,
+            "slip_c": slip_c,
+            "combined": combined,
+        },
+        "apex_generated": True,
     }
 
 
@@ -642,7 +620,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def cmd_safe(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle the /safe command — return daily curated safe picks."""
+    """Handle the /safe command — return daily curated picks using APEX system."""
     if not await _ensure_private(update):
         return
 
@@ -654,8 +632,7 @@ async def cmd_safe(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         )
         return
 
-    # Notify user that analysis is in progress
-    progress_msg = await update.message.reply_text("⏳ Fetching today's matches and analyzing stats...")
+    progress_msg = await update.message.reply_text("⏳ APEX analyzing today's matches with elite discipline...")
 
     try:
         picks = await generate_safe_picks()
@@ -667,45 +644,50 @@ async def cmd_safe(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     top = picks.get("top_10", [])
     slips = picks.get("slips", {})
 
-    if not top:
-        await progress_msg.edit_text(
-            "No qualifying picks found today. Try again later."
-        )
+    if not top and not slips.get("slip_a"):
+        await progress_msg.edit_text("No qualifying picks found today. Try again later.")
         return
 
-    msg = "VIP DAILY PICKS\n"
-    msg += "=" * 24 + "\n\n"
+    msg = "🎯 *VIP DAILY PICKS — APEX SYSTEM*\n"
+    msg += "━" * 20 + "\n\n"
 
-    for i, p in enumerate(top, 1):
-        ts = "TBD"
-        if p.get("start_time_ms"):
-            try:
-                ts = datetime.fromtimestamp(p["start_time_ms"] / 1000).strftime("%H:%M UTC")
-            except:
-                pass
-        tier = p.get("tier", "B")
-        msg += f"{i}. {p['home']} vs {p['away']}\n"
-        msg += f"   {p['league']} | {ts}\n"
-        msg += f"   {p['market']}: {p['pick']} @ {p['odds']:.2f}\n"
-        msg += f"   Implied: {p['implied']}% | Tier: {tier}\n\n"
+    # Show top picks
+    if top:
+        msg += "📊 *TOP PICKS TODAY*\n\n"
+        for i, p in enumerate(top[:8], 1):
+            ts = "TBD"
+            if p.get("start_time_ms"):
+                try:
+                    ts = datetime.fromtimestamp(p["start_time_ms"] / 1000).strftime("%H:%M")
+                except:
+                    pass
+            tier = p.get("tier", "B")
+            msg += f"{i}. *{p['home']}* vs *{p['away']}*\n"
+            msg += f"   {p.get('league', '')} | {ts}\n"
+            msg += f"   {p.get('market', '')}: {p.get('pick_short', p.get('pick', ''))} @ {p['odds']:.2f}\n"
+            msg += f"   Tier {tier} | Score: {p.get('score', 0):.0f}\n\n"
+
+    # Show APEX slips
+    msg += "\n━" * 12 + "\n"
+    msg += "🧾 *APEX SLIP RECOMMENDATIONS*\n\n"
 
     for key, label, risk in [("slip_a", "SLIP A", "SAFE"), ("slip_b", "SLIP B", "MODERATE"), ("slip_c", "SLIP C", "HIGH")]:
         slip = slips.get(key, [])
         combined = slips.get("combined", {}).get(key[-1], 0)
         if slip:
-            msg += f"--- {label} ({combined:.1f}x) - {risk} ---\n"
+            msg += f"🔒 *{label}* ({combined:.2f}x) — {risk}\n"
             for p in slip:
-                msg += f"  {p['home']} vs {p['away']}: {p['pick']} @ {p['odds']:.2f}\n"
+                msg += f"  • {p.get('home', p.get('home_team', ''))} vs {p.get('away', p.get('away_team', ''))}\n"
+                msg += f"    {p.get('market', '')}: {p.get('pick', '')} @ {p.get('odds', 0):.2f}\n"
             msg += "\n"
 
-    msg += "Upgrade to VIP for daily optimized picks!\n"
-    msg += "DM the admin to verify your payment and get access."
+    msg += "⚡ _APEX: Analytical Precision, Extreme Discipline_"
 
     if len(msg) > 4000:
-        await progress_msg.edit_text(msg[:4000])
-        await update.message.reply_text(msg[4000:])
+        await progress_msg.edit_text(msg[:4000], parse_mode="Markdown")
+        await update.message.reply_text(msg[4000:], parse_mode="Markdown")
     else:
-        await progress_msg.edit_text(msg)
+        await progress_msg.edit_text(msg, parse_mode="Markdown")
 
 
 async def cmd_optimize(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

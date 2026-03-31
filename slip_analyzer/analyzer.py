@@ -13,7 +13,7 @@ from .consistency_engine import score_all_picks
 from .rebuild_engine import build_three_slips, build_three_slips_from_events, build_three_slips_target_odds
 from .formatter import format_telegram_message, format_event_slips_message, format_concise_slip_message, format_full_analysis_message
 from .tier_classifier import classify_match_tier
-from .search_analyzer import search_matches_batch, ai_predict_best_plays
+from .search_analyzer import analyze_slip_with_search
 
 logger = logging.getLogger(__name__)
 

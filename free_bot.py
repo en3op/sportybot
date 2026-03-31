@@ -36,10 +36,15 @@ from slip_analyzer.search_analyzer import analyze_slip_with_search
 # CONFIGURATION
 # =============================================================================
 
+import os
 BOT_TOKEN = os.environ.get("FREE_BOT_TOKEN", "8784721708:AAFBp7_YbzpzeNvg-Y7lam_i8w6FhnJByHw")
 PAYSTACK_LINK = os.environ.get("PAYSTACK_LINK", "https://paystack.com/pay/YOUR_PAYMENT_LINK_HERE")
 VIP_BOT_USERNAME = "@Sporty_vip_bot"
 MAX_FREE_TRIES = 5
+
+# Absolute path to VIP database
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+VIP_DB_PATH = os.path.join(BASE_DIR, "vip_users.db")
 
 # =============================================================================
 # LOGGING
@@ -132,10 +137,53 @@ def _get_slip_count(user_id: int) -> int:
     conn.close()
     return row[0] if row else 0
 
+def _is_vip_user(user_id: int) -> bool:
+    """Check if user is a VIP by querying vip_users.db with absolute path."""
+    try:
+        logger.info(f"Checking VIP status for user {user_id}, DB path: {VIP_DB_PATH}")
+        conn = sqlite3.connect(VIP_DB_PATH)
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Get all VIP users for debugging
+        all_vips = conn.execute("SELECT user_id, expiry_date FROM vip_users").fetchall()
+        logger.info(f"All VIP users in DB: {[(r[0], r[1]) for r in all_vips]}")
+        
+        row = conn.execute(
+            "SELECT user_id, expiry_date FROM vip_users WHERE user_id = ? AND expiry_date > ?",
+            (user_id, now)
+        ).fetchone()
+        conn.close()
+        
+        if row:
+            logger.info(f"✅ User {user_id} IS VIP (expires: {row[1]})")
+        else:
+            # Check if user exists but expired
+            expired = conn = sqlite3.connect(VIP_DB_PATH)
+            exp_row = expired.execute(
+                "SELECT user_id, expiry_date FROM vip_users WHERE user_id = ?",
+                (user_id,)
+            ).fetchone()
+            expired.close()
+            if exp_row:
+                logger.info(f"❌ User {user_id} WAS VIP but EXPIRED (expired: {exp_row[1]}, now: {now})")
+            else:
+                logger.info(f"❌ User {user_id} NOT in VIP database")
+        
+        return row is not None
+    except Exception as e:
+        logger.error(f"VIP check failed for {user_id}: {e}")
+        return False
+
 def _check_free_limit(user_id: int) -> bool:
     """Check if user has exceeded free limit. Returns True if allowed."""
+    is_vip = _is_vip_user(user_id)
+    if is_vip:
+        logger.info(f"✅ VIP user {user_id} - unlimited access granted")
+        return True
     count = _get_slip_count(user_id)
-    return count < MAX_FREE_TRIES
+    allowed = count < MAX_FREE_TRIES
+    logger.info(f"Free user {user_id} - slips: {count}/{MAX_FREE_TRIES}, allowed: {allowed}")
+    return allowed
 
 # =============================================================================
 # HELPERS

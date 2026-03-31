@@ -276,24 +276,25 @@ You are an expert football betting analyst. The user has sent a betting slip wit
 {search_data}
 
 ## YOUR TASK:
-Based on the search data above, analyze each match and create EXACTLY 3 slip tiers using ONLY these matches:
+Based on the search data above, analyze each match and create EXACTLY 3 slip tiers.
 
-1. **🔒 SAFE SLIP** — Low risk, high probability picks from these matches
-   - Use Double Chance, Over 1.5 Goals, Draw No Bet markets
+**CRITICAL RULE:** Each slip must use DIFFERENT matches. Do NOT reuse the same match across multiple slips.
+
+1. **🔒 SAFE SLIP** — Low risk, high probability picks
+   - Use ONLY 2-3 of the matches (pick the safest ones)
+   - Markets: Double Chance, Over 1.5 Goals, Draw No Bet
    - Target odds per pick: 1.10 - 1.80
-   - Pick the safest option from each match
 
-2. **⚖️ MODERATE SLIP** — Balanced risk/reward from these matches
-   - Use 1X2, BTTS, Over 2.5 Goals markets
+2. **⚖️ MODERATE SLIP** — Balanced risk/reward
+   - Use 2-3 DIFFERENT matches (NOT the ones used in SAFE)
+   - Markets: 1X2, BTTS, Over 2.5 Goals
    - Target odds per pick: 1.50 - 2.50
-   - Pick the best value option from each match
 
-3. **🚀 HIGH SLIP** — High risk, high reward from these matches
-   - Use 1X2 straight, Correct Score, Handicap markets
+3. **🚀 HIGH SLIP** — High risk, high reward
+   - Use 2-3 DIFFERENT matches (NOT used in SAFE or MODERATE)
+   - Markets: 1X2 straight, Correct Score, Handicap
    - Target odds per pick: 2.00 - 5.00
-   - Pick the most aggressive option from each match
-
-For each match, suggest ONE pick per tier. All picks must come from the user's matches only.
+   - Mix pick types: max 1 draw, max 2 away wins
 
 ## OUTPUT FORMAT (JSON ONLY):
 {{
@@ -315,6 +316,9 @@ For each match, suggest ONE pick per tier. All picks must come from the user's m
     "description": "High risk accumulator"
   }}
 }}
+
+When finished, add this line at the very end:
+⚡ *Want unlimited analysis?* Upgrade to VIP 👉 @Sporty_vip_bot
 """
 
 
