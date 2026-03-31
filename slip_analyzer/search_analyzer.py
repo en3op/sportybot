@@ -22,7 +22,13 @@ try:
 except ImportError:
     USE_DDGS = False
 
-logger = logging.getLogger(__name__)
+try:
+    from tavily import TavilyClient
+    USE_TAVILY = True
+except ImportError:
+    USE_TAVILY = False
+
+TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "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") # Default key for testing
 
 # ── NVIDIA NIM API CONFIG ───────────────────────────────────────────────────
 
@@ -263,50 +269,59 @@ OCR TEXT:
 # ── SEARCH FUNCTION ─────────────────────────────────────────────────────────
 
 def search_match_context(home: str, away: str) -> str:
-    """Search DuckDuckGo for form and prediction data for a fixture with a strict timeout."""
-    def _do_search():
+    """Multi-source search for football stats with automatic fallback."""
+    
+    def _search_tavily():
+        if not USE_TAVILY: return None
+        try:
+            client = TavilyClient(api_key=TAVILY_API_KEY)
+            query = f"{home} vs {away} football stats injuries form {datetime.now().strftime('%B %Y')}"
+            response = client.search(query=query, search_depth="advanced", max_results=5)
+            
+            context = "=== TAVILY SEARCH DATA ===\n"
+            for r in response.get('results', []):
+                context += f"Source: {r.get('title')}\n{r.get('content')}\n\n"
+            return context.strip() if response.get('results') else None
+        except Exception as e:
+            logger.warning(f"Tavily search failed: {e}")
+            return None
+
+    def _search_ddg():
         month_year = datetime.now().strftime("%B %Y")
         query = f"{home} vs {away} pre-game form stats injuries {month_year}"
-        
         try:
             if USE_DDGS:
                 with DDGS2() as ddgs:
                     results = list(ddgs.text(query, max_results=5))
-                    if not results:
-                        return "No search results found."
-                    
-                    context = ""
+                    if not results: return None
+                    context = "=== DDG SEARCH DATA ===\n"
                     for i, r in enumerate(results, 1):
-                        context += f"Source {i}: {r.get('title', '')}\n"
-                        context += f"{r.get('body', '')}\n\n"
-                    
+                        context += f"Source {i}: {r.get('title', '')}\n{r.get('body', '')}\n\n"
                     return context.strip()
-            else:
-                with DDGS() as ddgs:
-                    results = ddgs.text(query, max_results=5)
-                    if not results:
-                        return "No search results found."
-                    
-                    context = ""
-                    for i, r in enumerate(results, 1):
-                        context += f"Source {i}: {r.get('title', '')}\n"
-                        context += f"{r.get('body', '')}\n\n"
-                    
-                    return context.strip()
+            return None
         except Exception as e:
-            return f"Search error: {str(e)}"
+            logger.warning(f"DDG search failed: {e}")
+            return None
 
-    # Use ThreadPoolExecutor for a strict 10-second timeout
+    # execution logic
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-        future = executor.submit(_do_search)
+        # Try Tavily first (most reliable)
+        future_tavily = executor.submit(_search_tavily)
         try:
-            return future.result(timeout=10)
-        except concurrent.futures.TimeoutError:
-            logger.warning(f"Search TIMEOUT for {home} vs {away}. Falling back to AI knowledge.")
-            return "SEARCH TIMEOUT: Please use your internal professional knowledge for this match."
-        except Exception as e:
-            logger.error(f"Search EXECUTION error for {home} vs {away}: {e}")
-            return f"Search execution failed: {str(e)}"
+            res = future_tavily.result(timeout=10)
+            if res: return res
+        except: pass
+
+        # Fallback to DDG
+        logger.info(f"Tavily failed/timed out for {home} vs {away}, falling back to DDG")
+        future_ddg = executor.submit(_search_ddg)
+        try:
+            res = future_ddg.result(timeout=10)
+            if res: return res
+        except: pass
+
+    logger.warning(f"All search sources failed for {home} vs {away}. Using AI baseline.")
+    return "SEARCH FAILED: Please use your internal professional knowledge for this match."
 
 
 def build_search_context(matches: list) -> dict:

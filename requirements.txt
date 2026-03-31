@@ -8,4 +8,5 @@ schedule>=1.2
 ddgs
 duckduckgo_search
 openai
+tavily-python
 gunicorn>=21.0
