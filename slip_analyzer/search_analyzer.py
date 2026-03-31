@@ -11,6 +11,7 @@ import time
 import logging
 import os
 import re
+import concurrent.futures
 from datetime import datetime
 from typing import Optional
 
@@ -262,38 +263,50 @@ OCR TEXT:
 # ── SEARCH FUNCTION ─────────────────────────────────────────────────────────
 
 def search_match_context(home: str, away: str) -> str:
-    """Search DuckDuckGo for form and prediction data for a fixture."""
-    month_year = datetime.now().strftime("%B %Y")
-    query = f"{home} vs {away} form prediction {month_year}"
-    
-    try:
-        if USE_DDGS:
-            with DDGS2() as ddgs:
-                results = list(ddgs.text(query, max_results=3))
-                if not results:
-                    return "No search results found."
-                
-                context = ""
-                for i, r in enumerate(results, 1):
-                    context += f"Source {i}: {r.get('title', '')}\n"
-                    context += f"{r.get('body', '')}\n\n"
-                
-                return context.strip()
-        else:
-            with DDGS() as ddgs:
-                results = ddgs.text(query, max_results=3)
-                if not results:
-                    return "No search results found."
-                
-                context = ""
-                for i, r in enumerate(results, 1):
-                    context += f"Source {i}: {r.get('title', '')}\n"
-                    context += f"{r.get('body', '')}\n\n"
-                
-                return context.strip()
-    except Exception as e:
-        logger.warning(f"Search failed for {home} vs {away}: {e}")
-        return f"Search failed: {str(e)}"
+    """Search DuckDuckGo for form and prediction data for a fixture with a strict timeout."""
+    def _do_search():
+        month_year = datetime.now().strftime("%B %Y")
+        query = f"{home} vs {away} pre-game form stats injuries {month_year}"
+        
+        try:
+            if USE_DDGS:
+                with DDGS2() as ddgs:
+                    results = list(ddgs.text(query, max_results=5))
+                    if not results:
+                        return "No search results found."
+                    
+                    context = ""
+                    for i, r in enumerate(results, 1):
+                        context += f"Source {i}: {r.get('title', '')}\n"
+                        context += f"{r.get('body', '')}\n\n"
+                    
+                    return context.strip()
+            else:
+                with DDGS() as ddgs:
+                    results = ddgs.text(query, max_results=5)
+                    if not results:
+                        return "No search results found."
+                    
+                    context = ""
+                    for i, r in enumerate(results, 1):
+                        context += f"Source {i}: {r.get('title', '')}\n"
+                        context += f"{r.get('body', '')}\n\n"
+                    
+                    return context.strip()
+        except Exception as e:
+            return f"Search error: {str(e)}"
+
+    # Use ThreadPoolExecutor for a strict 10-second timeout
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(_do_search)
+        try:
+            return future.result(timeout=10)
+        except concurrent.futures.TimeoutError:
+            logger.warning(f"Search TIMEOUT for {home} vs {away}. Falling back to AI knowledge.")
+            return "SEARCH TIMEOUT: Please use your internal professional knowledge for this match."
+        except Exception as e:
+            logger.error(f"Search EXECUTION error for {home} vs {away}: {e}")
+            return f"Search execution failed: {str(e)}"
 
 
 def build_search_context(matches: list) -> dict:
@@ -501,10 +514,10 @@ You are an expert football betting analyst. Analyze the following search data fo
 {context}
 
 ## YOUR TASK:
-Suggest exactly 3 professional plays for this match:
-1. SAFE - Technical accumulation. (Double Chance, Over 1.5, DNB, Clean Sheet). Target odds: 1.15 - 1.45.
-2. MODERATE - Market value play. (1X2 results, BTTS, Multi-Goals, Win Either Half). Target odds: 1.50 - 2.50.
-3. HIGH - High-edge aggressive play. (Handicap spreads, Correct Score, Winning Margin, Draw). Target odds: 2.50 - 6.00.
+Suggest exactly 3 professional plays for this match based on the provided search data (or your elite internal knowledge if search timed out). Use these target odds tiers:
+1. SAFE - Technical accumulation. (Double Chance, Over 1.5, DNB, Clean Sheet). Target odds: 2.80 - 3.50.
+2. MODERATE - Market value play. (1X2 results, BTTS, Multi-Goals, Win Either Half). Target odds: 4.50 - 6.00.
+3. HIGH - Elite-edge aggressive play. (Handicap spreads, Correct Score, Winning Margin, Draw). Target odds: 9.00 - 12.00.
 
 ## STRATEGY RULES:
 - Avoid basic 'Home Win' or 'Draw' if better value exists in creative markets.
