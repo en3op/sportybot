@@ -1093,33 +1093,14 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         # SKIP SportyBet: Go straight to web search analysis for all detected matches
         match_info = {}
         match_plays = {}
+        
+        # Populate analysis queue from extracted match pairs
         for t1, t2 in match_pairs:
             match_key = f"{t1} vs {t2}"
             if match_key not in match_info:
                 match_info[match_key] = {"home": t1, "away": t2, "league": "Unknown"}
             if match_key not in match_plays:
                 match_plays[match_key] = [] # Empty list tells analyzer to use AI prediction
-        for display_name in match_plays.keys():
-            # Try to get league from events
-            for event in events:
-                ev_name = f"{event.get('home', '')} vs {event.get('away', '')}"
-                if ev_name == display_name:
-                    match_info[display_name] = {
-                        "home": event.get("home", ""),
-                        "away": event.get("away", ""),
-                        "league": event.get("league", "")
-                    }
-                    break
-        
-        # Also add info for matches that failed to get plays from SportyBet
-        # so AI can still search for them
-        for t1, t2 in match_pairs:
-            match_key = f"{t1} vs {t2}"
-            if match_key not in match_plays:
-                # Add placeholder to allow search_analyzer to pick it up
-                match_info[match_key] = {"home": t1, "away": t2, "league": "Unknown"}
-                if match_key not in match_plays:
-                    match_plays[match_key] = [] # Empty list of plays tells analyzer to rely on search
 
         # Progress callback for search
         search_progress_shown = []
