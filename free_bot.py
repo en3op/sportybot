@@ -1090,40 +1090,9 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             )
             return
 
-        # Fetch SportyBet events (OPTIONAL)
-        await _safe_edit(progress_msg, "\u23f3 Fetching live SportyBet odds (optional)...")
-        events = await fetch_live_events()
-        if not events:
-            logger.warning("Could not fetch SportyBet events, proceeding with AI-only mode")
-            events = []
-
-        # Match strategy: try team pairs first, then individual teams
-        match_plays = {}
-
-        # Strategy 1: Match "Team vs Team" pairs directly
-        for team1, team2 in match_pairs:
-            event = find_matching_event(team1, team2, events)
-            if event:
-                display_name = f"{event['home']} vs {event['away']}"
-                analysis = analyze_all_markets_full(event)
-                plays = analysis.get("plays", [])
-                if plays:
-                    match_plays[display_name] = plays
-                    logger.info(f"Pair matched: {team1} vs {team2} -> {display_name}")
-
-        # Strategy 2: If no pairs matched, try individual team names
-        if potential_teams and events:
-            matched_events = _match_teams_to_events(potential_teams, events)
-            for display_name, event in matched_events.items():
-                if display_name not in match_plays:
-                    analysis = analyze_all_markets_full(event)
-                    plays = analysis.get("plays", [])
-                    if plays:
-                        match_plays[display_name] = plays
-        
-        # PURE AI MODE: Add all extracted match pairs to the analysis queue
-        # even if they don't exist on SportyBet
+        # SKIP SportyBet: Go straight to web search analysis for all detected matches
         match_info = {}
+        match_plays = {}
         for t1, t2 in match_pairs:
             match_key = f"{t1} vs {t2}"
             if match_key not in match_info:
