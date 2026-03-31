@@ -92,6 +92,30 @@ def init_db():
 # ROUTES
 # =============================================================================
 
+# =============================================================================
+# TELEGRAM WEBHOOK ENDPOINT
+# =============================================================================
+
+@app.route("/telegram-webhook", methods=["POST"])
+def telegram_webhook():
+    """Handle incoming Telegram updates via webhook."""
+    import asyncio
+    from telegram import Update
+    
+    try:
+        data = request.get_json()
+        update = Update.de_json(data, None)
+        
+        bot_app = app.config.get('TELEGRAM_BOT_APP')
+        if bot_app:
+            asyncio.run(bot_app.process_update(update))
+            return "OK", 200
+        return "Bot not initialized", 500
+    except Exception as e:
+        logger.error(f"Webhook error: {e}")
+        return "Error", 500
+
+
 @app.route("/")
 def dashboard():
     conn = get_db()

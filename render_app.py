@@ -1,9 +1,7 @@
 import os
 import logging
 import sqlite3
-import threading
-import time
-import traceback
+import asyncio
 
 logging.basicConfig(
     level=logging.INFO,
@@ -36,7 +34,7 @@ def init_databases():
     vip_conn.commit()
     vip_conn.close()
     logger.info("vip_users.db initialized")
-    
+
     pool_conn = sqlite3.connect("prediction_pool.db")
     pool_conn.executescript("""
         CREATE TABLE IF NOT EXISTS matches (
@@ -72,64 +70,56 @@ def init_databases():
     pool_conn.close()
     logger.info("prediction_pool.db initialized")
 
-def start_vip_bot():
-    """Start the VIP bot from its runner module."""
-    try:
-        from run_vip_bot import main as vip_main
-        logger.info("VIP bot thread starting...")
-        vip_main()
-    except Exception as e:
-        logger.error(f"VIP bot thread failed: {e}")
-        logger.error(traceback.format_exc())
+FREE_BOT_TOKEN = os.environ.get("FREE_BOT_TOKEN", "8784721708:AAFBp7_YbzpzeNvg-Y7lam_i8w6FhnJByHw")
+WEBHOOK_URL = "https://sportybot-v2.onrender.com/telegram-webhook"
 
-def start_free_bot():
-    """Start the Free bot from its runner module."""
-    try:
-        from run_free_bot import main as free_main
-        logger.info("Free bot thread starting...")
-        free_main()
-    except Exception as e:
-        logger.error(f"Free bot thread failed: {e}")
-        logger.error(traceback.format_exc())
+free_bot_app = None
 
-def check_tesseract():
-    """Verify if Tesseract-OCR is installed and accessible."""
-    import shutil
-    path = shutil.which("tesseract")
-    if path:
-        logger.info(f"Tesseract-OCR found at: {path}")
-        return True
-    else:
-        # Check standard Windows path
-        if os.path.exists(r"C:\Program Files\Tesseract-OCR\tesseract.exe"):
-            logger.info("Tesseract-OCR found at standard Windows path")
-            return True
-        logger.warning("Tesseract-OCR NOT FOUND. Free Bot OCR will fail.")
-        return False
+def setup_free_bot():
+    """Set up the Free bot application."""
+    global free_bot_app
+    from telegram.ext import Application, CommandHandler, MessageHandler, filters
+    import free_bot
+
+    free_bot_app = Application.builder().token(FREE_BOT_TOKEN).build()
+
+    free_bot_app.add_handler(CommandHandler("start", free_bot.cmd_start))
+    free_bot_app.add_handler(CommandHandler("help", free_bot.cmd_help))
+    free_bot_app.add_handler(CommandHandler("analyze", free_bot.cmd_analyze))
+    free_bot_app.add_handler(CommandHandler("search", free_bot.cmd_search))
+    free_bot_app.add_handler(CommandHandler("full", free_bot.cmd_full))
+    free_bot_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, free_bot.handle_analyze_text))
+    free_bot_app.add_handler(MessageHandler(filters.PHOTO & ~filters.COMMAND, free_bot.handle_photo))
+
+    logger.info("Free bot handlers registered")
+
+async def set_webhook():
+    """Set the webhook for the bot."""
+    await free_bot_app.bot.set_webhook(url=WEBHOOK_URL)
+    logger.info(f"Webhook set to {WEBHOOK_URL}")
+
+async def init_bot_async():
+    """Initialize the bot application asynchronously."""
+    await free_bot_app.initialize()
+    await free_bot_app.start()
+    await set_webhook()
+
+def init_bot():
+    """Initialize the bot synchronously."""
+    setup_free_bot()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(init_bot_async())
+    logger.info("Free bot initialized with webhook")
 
 if __name__ == "__main__":
-    # Initialize databases first
     init_databases()
-    
-    # Check dependencies
-    check_tesseract()
-    
-    # Start bots in separate daemon threads
-    logger.info("Starting bot threads...")
-    vip_thread = threading.Thread(target=start_vip_bot, name="VIP-Bot", daemon=True)
-    free_thread = threading.Thread(target=start_free_bot, name="Free-Bot", daemon=True)
-    vip_thread.start()
-    free_thread.start()
-    logger.info("Bot threads started!")
-    
-    # Run Flask app (main thread — Render health checks hit this)
-    try:
-        from app import app
-        port = int(os.environ.get("PORT", 5000))
-        logger.info(f"Starting Flask dashboard on port {port}")
-        app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
-    except Exception as e:
-        logger.error(f"Flask application failed: {e}")
-    finally:
-        logger.info("Shutting down orchestrator...")
+    init_bot()
 
+    from app import app as flask_app
+    
+    flask_app.config['TELEGRAM_BOT_APP'] = free_bot_app
+
+    port = int(os.environ.get("PORT", 5000))
+    logger.info(f"Starting Flask dashboard on port {port}")
+    flask_app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
