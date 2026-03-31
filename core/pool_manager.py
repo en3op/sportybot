@@ -222,10 +222,23 @@ def update_match_status(match_id: str, status: str):
 
 
 def purge_expired():
-    """Remove matches that have expired (finished more than 24h ago)."""
+    """Remove matches that have expired (finished more than 24h ago).
+    Protects matches with approved or manual predictions.
+    """
     conn = _get_db()
     cutoff = (datetime.now() - timedelta(hours=24)).isoformat()
-    deleted = conn.execute("DELETE FROM matches WHERE expires_at < ?", (cutoff,)).rowcount
+    
+    # Only delete matches where ALL predictions are non-approved and non-manual
+    # OR matches with NO predictions at all.
+    query = """
+        DELETE FROM matches 
+        WHERE expires_at < ? 
+        AND match_id NOT IN (
+            SELECT match_id FROM predictions 
+            WHERE approved = 1 OR model_version = 'manual'
+        )
+    """
+    deleted = conn.execute(query, (cutoff,)).rowcount
     conn.commit()
     conn.close()
     logger.info(f"Purged {deleted} expired matches")
