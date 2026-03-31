@@ -1,12 +1,8 @@
-"""
-Render.com deployment entry point
-Runs Flask dashboard (web) and uses multiprocessing for bots
-"""
-
 import os
 import logging
 import sqlite3
-import multiprocessing
+import threading
+import time
 
 logging.basicConfig(
     level=logging.INFO,
@@ -75,19 +71,23 @@ def init_databases():
     pool_conn.close()
     logger.info("prediction_pool.db initialized")
 
-def run_vip_bot_process():
-    """Run VIP bot in separate process."""
-    logger.info("VIP bot process starting...")
-    import subprocess
-    import sys
-    subprocess.run([sys.executable, "run_vip_bot.py"])
+def start_vip_bot():
+    """Start the VIP bot from its runner module."""
+    try:
+        from run_vip_bot import main as vip_main
+        logger.info("VIP bot thread starting...")
+        vip_main()
+    except Exception as e:
+        logger.error(f"VIP bot thread failed: {e}")
 
-def run_free_bot_process():
-    """Run Free bot in separate process."""
-    logger.info("Free bot process starting...")
-    import subprocess
-    import sys
-    subprocess.run([sys.executable, "run_free_bot.py"])
+def start_free_bot():
+    """Start the Free bot from its runner module."""
+    try:
+        from run_free_bot import main as free_main
+        logger.info("Free bot thread starting...")
+        free_main()
+    except Exception as e:
+        logger.error(f"Free bot thread failed: {e}")
 
 def check_tesseract():
     """Verify if Tesseract-OCR is installed and accessible."""
@@ -111,27 +111,25 @@ if __name__ == "__main__":
     # Check dependencies
     check_tesseract()
     
-    # Start bots as separate processes
-    logger.info("Starting bot worker processes...")
-    vip_process = multiprocessing.Process(target=run_vip_bot_process, name="VIP-Bot", daemon=True)
-    free_process = multiprocessing.Process(target=run_free_bot_process, name="Free-Bot", daemon=True)
+    # Start bots in separate threads (not processes)
+    logger.info("Starting bot threads...")
+    vip_thread = threading.Thread(target=start_vip_bot, name="VIP-Bot-Thread", daemon=True)
+    free_thread = threading.Thread(target=start_free_bot, name="Free-Bot-Thread", daemon=True)
     
-    vip_process.start()
-    free_process.start()
+    vip_thread.start()
+    free_thread.start()
     
-    logger.info(f"Bots started! VIP-Bot(PID:{vip_process.pid}), Free-Bot(PID:{free_process.pid})")
+    logger.info("Bot threads started!")
     
-    # Run Flask app (main process)
+    # Run Flask app (main thread)
     try:
         from app import app
         port = int(os.environ.get("PORT", 5000))
         logger.info(f"Starting Flask dashboard on port {port}")
+        # Use debug=False to avoid starting multiple instances in threads
         app.run(host="0.0.0.0", port=port, debug=False)
     except Exception as e:
         logger.error(f"Flask application failed: {e}")
     finally:
         logger.info("Shutting down orchestrator...")
-        if vip_process.is_alive():
-            vip_process.terminate()
-        if free_process.is_alive():
-            free_process.terminate()
+

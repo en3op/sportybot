@@ -1090,16 +1090,12 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             )
             return
 
-        # Fetch SportyBet events
-        await _safe_edit(progress_msg, "\u23f3 Fetching live SportyBet odds...")
+        # Fetch SportyBet events (OPTIONAL)
+        await _safe_edit(progress_msg, "\u23f3 Fetching live SportyBet odds (optional)...")
         events = await fetch_live_events()
-        logger.info(f"Fetched {len(events)} SportyBet events")
-
         if not events:
-            await _safe_edit(progress_msg,
-                "\u274c Could not fetch live odds. Please try again."
-            )
-            return
+            logger.warning("Could not fetch SportyBet events, proceeding with AI-only mode")
+            events = []
 
         # Match strategy: try team pairs first, then individual teams
         match_plays = {}
@@ -1116,7 +1112,7 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                     logger.info(f"Pair matched: {team1} vs {team2} -> {display_name}")
 
         # Strategy 2: If no pairs matched, try individual team names
-        if potential_teams:
+        if potential_teams and events:
             matched_events = _match_teams_to_events(potential_teams, events)
             for display_name, event in matched_events.items():
                 if display_name not in match_plays:
@@ -1124,9 +1120,16 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                     plays = analysis.get("plays", [])
                     if plays:
                         match_plays[display_name] = plays
-
-        # Use enhanced analyzer with search and tier classification
+        
+        # PURE AI MODE: Add all extracted match pairs to the analysis queue
+        # even if they don't exist on SportyBet
         match_info = {}
+        for t1, t2 in match_pairs:
+            match_key = f"{t1} vs {t2}"
+            if match_key not in match_info:
+                match_info[match_key] = {"home": t1, "away": t2, "league": "Unknown"}
+            if match_key not in match_plays:
+                match_plays[match_key] = [] # Empty list tells analyzer to use AI prediction
         for display_name in match_plays.keys():
             # Try to get league from events
             for event in events:

@@ -1,0 +1,100 @@
+﻿2026-03-30 22:27:15  
+2026-03-30 22:27:15  #5 [1/6] FROM docker.io/library/python:3.11-slim@sha256:9358444059ed78e2975ada2c189f1c1a3144a5dab6f35bff8c981afb38946634
+2026-03-30 22:27:15  #5 extracting sha256:7524aba74b8cc45ff3cf2f089fd9a638dfd58b001763194d0819c8d7c75d598f
+2026-03-30 22:27:15  #5 extracting sha256:7524aba74b8cc45ff3cf2f089fd9a638dfd58b001763194d0819c8d7c75d598f 0.4s done
+2026-03-30 22:27:15  #5 DONE 3.8s
+2026-03-30 22:27:15  
+2026-03-30 22:27:15  #7 [2/6] RUN apt-get update && apt-get install -y     tesseract-ocr     libtesseract-dev     libgl1-mesa-glx     libglib2.0-0     && rm -rf /var/lib/apt/lists/*
+2026-03-30 22:27:15  #7 0.115 Hit:1 http://deb.debian.org/debian trixie InRelease
+2026-03-30 22:27:15  #7 0.115 Get:2 http://deb.debian.org/debian trixie-updates InRelease [47.3 kB]
+2026-03-30 22:27:16  #7 0.127 Get:3 http://deb.debian.org/debian-security trixie-security InRelease [43.4 kB]
+2026-03-30 22:27:16  #7 0.139 Get:4 http://deb.debian.org/debian trixie/main amd64 Packages [9671 kB]
+2026-03-30 22:27:16  #7 0.232 Get:5 http://deb.debian.org/debian trixie-updates/main amd64 Packages [5412 B]
+2026-03-30 22:27:16  #7 0.233 Get:6 http://deb.debian.org/debian-security trixie-security/main amd64 Packages [114 kB]
+2026-03-30 22:27:16  #7 0.827 Fetched 9881 kB in 1s (13.2 MB/s)
+2026-03-30 22:27:17  #7 0.827 Reading package lists...
+2026-03-30 22:27:17  #7 1.337 Reading package lists...
+2026-03-30 22:27:17  #7 1.854 Building dependency tree...
+2026-03-30 22:27:18  #7 2.006 Reading state information...
+2026-03-30 22:27:18  #7 2.021 Package libgl1-mesa-glx is not available, but is referred to by another package.
+2026-03-30 22:27:18  #7 2.021 This may mean that the package is missing, has been obsoleted, or
+2026-03-30 22:27:18  #7 2.021 is only available from another source
+2026-03-30 22:27:18  #7 2.021 
+2026-03-30 22:27:18  #7 2.024 E: Package 'libgl1-mesa-glx' has no installation candidate
+2026-03-30 22:27:18  #7 ERROR: process "/bin/sh -c apt-get update && apt-get install -y     tesseract-ocr     libtesseract-dev     libgl1-mesa-glx     libglib2.0-0     && rm -rf /var/lib/apt/lists/*" did not complete successfully: exit code: 100
+2026-03-30 22:27:18  ------
+2026-03-30 22:27:18   > [2/6] RUN apt-get update && apt-get install -y     tesseract-ocr     libtesseract-dev     libgl1-mesa-glx     libglib2.0-0     && rm -rf /var/lib/apt/lists/*:
+2026-03-30 22:27:18  0.232 Get:5 http://deb.debian.org/debian trixie-updates/main amd64 Packages [5412 B]
+2026-03-30 22:27:18  0.233 Get:6 http://deb.debian.org/debian-security trixie-security/main amd64 Packages [114 kB]
+2026-03-30 22:27:18  
+2026-03-30 22:27:18  
+2026-03-30 22:27:18  
+2026-03-30 22:27:18  2.021 Package libgl1-mesa-glx is not available, but is referred to by another package.
+2026-03-30 22:27:18  2.021 This may mean that the package is missing, has been obsoleted, or
+2026-03-30 22:27:18  2.021 is only available from another source
+2026-03-30 22:27:18  2.021 
+2026-03-30 22:27:18  2.024 E: Package 'libgl1-mesa-glx' has no installation candidate
+2026-03-30 22:27:18  ------
+2026-03-30 22:27:18  Dockerfile:5
+2026-03-30 22:27:18  --------------------
+2026-03-30 22:27:18     4 |     # Install system dependencies
+2026-03-30 22:27:18     5 | >>> RUN apt-get update && apt-get install -y \
+2026-03-30 22:27:18     6 | >>>     tesseract-ocr \
+2026-03-30 22:27:18     7 | >>>     libtesseract-dev \
+2026-03-30 22:27:18     8 | >>>     libgl1-mesa-glx \
+2026-03-30 22:27:18     9 | >>>     libglib2.0-0 \
+2026-03-30 22:27:18    10 | >>>     && rm -rf /var/lib/apt/lists/*
+2026-03-30 22:27:18    11 |     
+2026-03-30 22:27:18  --------------------
+2026-03-30 22:27:18  error: failed to solve: process "/bin/sh -c apt-get update && apt-get install -y     tesseract-ocr     libtesseract-dev     libgl1-mesa-glx     libglib2.0-0     && rm -rf /var/lib/apt/lists/*" did not complete successfully: exit code: 100
+2026-03-30 22:27:18  error: exit status 1
+2026-03-30 22:33:54  #5 [1/6] FROM docker.io/library/python:3.11-slim@sha256:9358444059ed78e2975ada2c189f1c1a3144a5dab6f35bff8c981afb38946634
+2026-03-30 22:33:54  #5 extracting sha256:e35b92e2619d5152fbb45e6ccb02dbb1007c5784ad19a5e235bf05ca6e226a88
+2026-03-30 22:34:04  #5 extracting sha256:e35b92e2619d5152fbb45e6ccb02dbb1007c5784ad19a5e235bf05ca6e226a88 10.1s done
+2026-03-30 22:34:04  #5 DONE 20.7s
+2026-03-30 22:34:04  
+2026-03-30 22:34:04  #5 [1/6] FROM docker.io/library/python:3.11-slim@sha256:9358444059ed78e2975ada2c189f1c1a3144a5dab6f35bff8c981afb38946634
+2026-03-30 22:34:04  #5 extracting sha256:7524aba74b8cc45ff3cf2f089fd9a638dfd58b001763194d0819c8d7c75d598f 0.0s done
+2026-03-30 22:34:04  #5 DONE 20.7s
+2026-03-30 22:34:04  
+2026-03-30 22:34:04  #7 [2/6] RUN apt-get update && apt-get install -y tesseract-ocr libtesseract-dev libgl1-mesa-glx libglib2.0-0 && rm -rf /var/lib/apt/lists/*
+2026-03-30 22:34:04  #7 0.170 Hit:1 http://deb.debian.org/debian trixie InRelease
+2026-03-30 22:34:04  #7 0.170 Get:2 http://deb.debian.org/debian trixie-updates InRelease [47.3 kB]
+2026-03-30 22:34:04  #7 0.175 Get:3 http://deb.debian.org/debian-security trixie-security InRelease [43.4 kB]
+2026-03-30 22:34:04  #7 0.198 Get:4 http://deb.debian.org/debian trixie/main amd64 Packages [9671 kB]
+2026-03-30 22:34:04  #7 0.305 Get:5 http://deb.debian.org/debian trixie-updates/main amd64 Packages [5412 B]
+2026-03-30 22:34:04  #7 0.305 Get:6 http://deb.debian.org/debian-security trixie-security/main amd64 Packages [114 kB]
+2026-03-30 22:34:05  #7 1.091 Fetched 9881 kB in 1s (10.2 MB/s)
+2026-03-30 22:34:05  #7 1.091 Reading package lists...
+2026-03-30 22:34:06  #7 1.940 Reading package lists...
+2026-03-30 22:34:06  #7 2.576 Building dependency tree...
+2026-03-30 22:34:07  #7 2.738 Reading state information...
+2026-03-30 22:34:07  #7 2.752 Package libgl1-mesa-glx is not available, but is referred to by another package.
+2026-03-30 22:34:07  #7 2.752 This may mean that the package is missing, has been obsoleted, or
+2026-03-30 22:34:07  #7 2.752 is only available from another source
+2026-03-30 22:34:07  #7 2.752 
+2026-03-30 22:34:07  #7 2.756 E: Package 'libgl1-mesa-glx' has no installation candidate
+2026-03-30 22:34:13  #7 ERROR: process "/bin/sh -c apt-get update && apt-get install -y tesseract-ocr libtesseract-dev libgl1-mesa-glx libglib2.0-0 && rm -rf /var/lib/apt/lists/*" did not complete successfully: exit code: 100
+2026-03-30 22:34:14  ------
+2026-03-30 22:34:14   > [2/6] RUN apt-get update && apt-get install -y tesseract-ocr libtesseract-dev libgl1-mesa-glx libglib2.0-0 && rm -rf /var/lib/apt/lists/*:
+2026-03-30 22:34:14  0.305 Get:5 http://deb.debian.org/debian trixie-updates/main amd64 Packages [5412 B]
+2026-03-30 22:34:14  0.305 Get:6 http://deb.debian.org/debian-security trixie-security/main amd64 Packages [114 kB]
+2026-03-30 22:34:14  
+2026-03-30 22:34:14  
+2026-03-30 22:34:14  
+2026-03-30 22:34:14  2.752 Package libgl1-mesa-glx is not available, but is referred to by another package.
+2026-03-30 22:34:14  2.752 This may mean that the package is missing, has been obsoleted, or
+2026-03-30 22:34:14  2.752 is only available from another source
+2026-03-30 22:34:14  2.752 
+2026-03-30 22:34:14  2.756 E: Package 'libgl1-mesa-glx' has no installation candidate
+2026-03-30 22:34:14  ------
+2026-03-30 22:34:14  Dockerfile:6
+2026-03-30 22:34:14  --------------------
+2026-03-30 22:34:14     4 |     # Install system dependencies
+2026-03-30 22:34:14     5 |     # Using a single line for apt-get to avoid escaping issues
+2026-03-30 22:34:14     6 | >>> RUN apt-get update && apt-get install -y tesseract-ocr libtesseract-dev libgl1-mesa-glx libglib2.0-0 && rm -rf /var/lib/apt/lists/*
+2026-03-30 22:34:14     7 |     
+2026-03-30 22:34:14     8 |     # Set working directory
+2026-03-30 22:34:14  --------------------
+2026-03-30 22:34:14  error: failed to solve: process "/bin/sh -c apt-get update && apt-get install -y tesseract-ocr libtesseract-dev libgl1-mesa-glx libglib2.0-0 && rm -rf /var/lib/apt/lists/*" did not complete successfully: exit code: 100
+2026-03-30 22:34:14  error: exit status 1

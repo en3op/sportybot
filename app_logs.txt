@@ -1,0 +1,44 @@
+﻿2026-03-30 22:40:38  [0;34m[1m==> [0m[1mDeploying...[0m
+2026-03-30 22:40:38  [0;34m[1m==> [0m[1mSetting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance[0m
+2026-03-30 22:40:55  2026-03-30 22:40:55,976 - INFO - vip_users.db initialized
+2026-03-30 22:40:55  2026-03-30 22:40:55,984 - INFO - prediction_pool.db initialized
+2026-03-30 22:40:55  2026-03-30 22:40:55,992 - INFO - Tesseract-OCR found at: /usr/bin/tesseract
+2026-03-30 22:40:55  2026-03-30 22:40:55,992 - INFO - Starting bot worker processes...
+2026-03-30 22:40:56  2026-03-30 22:40:56,067 - INFO - VIP bot process starting...
+2026-03-30 22:40:56  2026-03-30 22:40:56,067 - INFO - Bots started! VIP-Bot(PID:7), Free-Bot(PID:8)
+2026-03-30 22:40:56  2026-03-30 22:40:56,068 - INFO - Free bot process starting...
+2026-03-30 22:40:56  2026-03-30 22:40:56,467 - VIP Bot - INFO - Starting VIP bot...
+2026-03-30 22:40:57  2026-03-30 22:40:57,570 - Free Bot - INFO - Starting Free bot...
+2026-03-30 22:41:03  2026-03-30 22:41:03,864 - VIP Bot - INFO - VIP bot handlers registered, starting polling...
+2026-03-30 22:41:04  2026-03-30 22:41:04,174 - INFO - Starting Flask dashboard on port 5000
+2026-03-30 22:41:04   * Serving Flask app 'app'
+2026-03-30 22:41:04   * Debug mode: off
+2026-03-30 22:41:04  2026-03-30 22:41:04,264 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+2026-03-30 22:41:04   * Running on all addresses (0.0.0.0)
+2026-03-30 22:41:04   * Running on http://127.0.0.1:5000
+2026-03-30 22:41:04   * Running on http://10.20.55.58:5000
+2026-03-30 22:41:04  2026-03-30 22:41:04,264 - INFO - [33mPress CTRL+C to quit[0m
+2026-03-30 22:41:04  2026-03-30 22:41:04,863 - VIP Bot - INFO - HTTP Request: POST https://api.telegram.org/bot8791071506:AAGZv4Y3GWSMQ5mnj_vH2cT3p0BWEpxOOmk/getMe "HTTP/1.1 200 OK"
+2026-03-30 22:41:04  2026-03-30 22:41:04,968 - Free Bot - INFO - Free bot handlers registered, starting polling...
+2026-03-30 22:41:05  2026-03-30 22:41:05,063 - VIP Bot - INFO - HTTP Request: POST https://api.telegram.org/bot8791071506:AAGZv4Y3GWSMQ5mnj_vH2cT3p0BWEpxOOmk/deleteWebhook "HTTP/1.1 200 OK"
+2026-03-30 22:41:05  2026-03-30 22:41:05,065 - VIP Bot - INFO - Application started
+2026-03-30 22:41:05  2026-03-30 22:41:05,465 - Free Bot - INFO - HTTP Request: POST https://api.telegram.org/bot8784721708:AAFBp7_YbzpzeNvg-Y7lam_i8w6FhnJByHw/getMe "HTTP/1.1 200 OK"
+2026-03-30 22:41:05  2026-03-30 22:41:05,468 - INFO - Fetched 8 events
+2026-03-30 22:41:05  2026-03-30 22:41:05,469 - INFO - Filtered to 8 today
+2026-03-30 22:41:05  2026-03-30 22:41:05,663 - Free Bot - INFO - HTTP Request: POST https://api.telegram.org/bot8784721708:AAFBp7_YbzpzeNvg-Y7lam_i8w6FhnJByHw/deleteWebhook "HTTP/1.1 200 OK"
+2026-03-30 22:41:05  2026-03-30 22:41:05,665 - Free Bot - INFO - Application started
+2026-03-30 22:41:05  2026-03-30 22:41:05,768 - INFO - 127.0.0.1 - - [30/Mar/2026 22:41:05] "HEAD / HTTP/1.1" 200 -
+2026-03-30 22:41:13  [0;32m[1m==> [0m[1mYour service is live ≡ƒÄë[0m
+2026-03-30 22:41:13  [0;32m[1m==> [0m[1m[0m
+2026-03-30 22:41:13  [0;32m[1m==> [0m[1m///////////////////////////////////////////////////////////[0m
+2026-03-30 22:41:13  [0;32m[1m==> [0m[1m[0m
+2026-03-30 22:41:13  [0;32m[1m==> [0m[1mAvailable at your primary URL https://sportybot-v2.onrender.com[0m
+2026-03-30 22:41:13  [0;32m[1m==> [0m[1m[0m
+2026-03-30 22:41:13  [0;32m[1m==> [0m[1m///////////////////////////////////////////////////////////[0m
+2026-03-30 22:41:13  2026-03-30 22:41:13,789 - INFO - Fetched 8 events
+2026-03-30 22:41:13  2026-03-30 22:41:13,789 - INFO - Filtered to 8 today
+2026-03-30 22:41:13  2026-03-30 22:41:13,791 - INFO - 127.0.0.1 - - [30/Mar/2026 22:41:13] "GET / HTTP/1.1" 200 -
+2026-03-30 22:41:15  2026-03-30 22:41:15,550 - VIP Bot - INFO - HTTP Request: POST https://api.telegram.org/bot8791071506:AAGZv4Y3GWSMQ5mnj_vH2cT3p0BWEpxOOmk/getUpdates "HTTP/1.1 200 OK"
+2026-03-30 22:41:16  2026-03-30 22:41:16,254 - Free Bot - INFO - HTTP Request: POST https://api.telegram.org/bot8784721708:AAFBp7_YbzpzeNvg-Y7lam_i8w6FhnJByHw/getUpdates "HTTP/1.1 200 OK"
+2026-03-30 22:41:25  2026-03-30 22:41:25,712 - VIP Bot - INFO - HTTP Request: POST https://api.telegram.org/bot8791071506:AAGZv4Y3GWSMQ5mnj_vH2cT3p0BWEpxOOmk/getUpdates "HTTP/1.1 200 OK"
+2026-03-30 22:41:26  2026-03-30 22:41:26,417 - Free Bot - INFO - HTTP Request: POST https://api.telegram.org/bot8784721708:AAFBp7_YbzpzeNvg-Y7lam_i8w6FhnJByHw/getUpdates "HTTP/1.1 200 OK"

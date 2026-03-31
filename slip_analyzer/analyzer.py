@@ -13,7 +13,7 @@ from .consistency_engine import score_all_picks
 from .rebuild_engine import build_three_slips, build_three_slips_from_events, build_three_slips_target_odds
 from .formatter import format_telegram_message, format_event_slips_message, format_concise_slip_message, format_full_analysis_message
 from .tier_classifier import classify_match_tier
-from .search_analyzer import search_matches_batch
+from .search_analyzer import search_matches_batch, ai_predict_best_plays
 
 logger = logging.getLogger(__name__)
 
@@ -109,8 +109,14 @@ def analyze_slip_enhanced(
     """
     start = time.time()
     
+    if not match_plays and not match_info:
+        return "\u274c No matches provided for analysis.", None
+    
+    # Ensure match_plays and match_info are in sync
     if not match_plays:
-        return "\u274c Could not match any games to live events.", None
+        match_plays = {k: [] for k in match_info.keys()}
+    if not match_info:
+        match_info = {k: {} for k in match_plays.keys()}
     
     # Generate analysis ID
     analysis_id = str(uuid.uuid4())[:8]
@@ -136,9 +142,34 @@ def analyze_slip_enhanced(
             logger.info(f"Searching {len(matches_to_search)} matches...")
             search_results = search_matches_batch(matches_to_search, progress_callback)
     
-    # Step 2: Classify tiers for each match
+    # Step 2: Classify tiers and Predict Best Plays for each match
     match_tiers = {}
     for match_key in match_plays.keys():
+        plays = match_plays[match_key]
+        search_data = search_results.get(match_key, {})
+        
+        # If no SportyBet plays, ask AI to predict best ones
+        if not plays and search_results:
+            info = match_info.get(match_key, {})
+            home = info.get("home", match_key.split(" vs ")[0] if " vs " in match_key else "")
+            away = info.get("away", match_key.split(" vs ")[1] if " vs " in match_key else "")
+            
+            ai_plays = ai_predict_best_plays(home, away, search_data.get("search_context", ""))
+            if ai_plays:
+                # Map AI plays to standard play format
+                for p_tier, p_data in ai_plays.items():
+                    plays.append({
+                        "market": p_data.get("market", "Unknown"),
+                        "pick": p_data.get("pick", "Unknown"),
+                        "pick_short": p_data.get("pick", "Unknown"),
+                        "odds": p_data.get("odds", 2.0),
+                        "implied": p_data.get("confidence", 50),
+                        "tier": "A" if p_tier == "safe" else "B" if p_tier == "moderate" else "C",
+                        "score": p_data.get("confidence", 50),
+                        "reasoning": p_data.get("reason", ""),
+                        "source": "AI Prediction"
+                    })
+                match_plays[match_key] = plays
         plays = match_plays[match_key]
         
         # Get odds from first play

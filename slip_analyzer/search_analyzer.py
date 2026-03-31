@@ -491,6 +491,54 @@ def parse_ocr_to_matches(ocr_text: str) -> list[dict]:
     return matches
 
 
+# ── PROMPT 3: AI BEST PLAY PREDICTION ──────────────────────────────────────
+
+AI_PREDICTION_PROMPT = """
+You are an expert football betting analyst. Analyze the following search data for a match and suggest the 3 best "plays" (Market + Pick) for this game.
+
+## FIXTURE: {home} vs {away}
+## SEARCH DATA:
+{context}
+
+## YOUR TASK:
+Suggest exactly 3 plays for this match:
+1. SAFE - Highest probability (e.g. Double Chance, Over 1.5, DNB). Target odds: 1.20 - 1.50.
+2. MODERATE - Balanced value (e.g. 1X2 favorite, BTTS, Over 2.5). Target odds: 1.60 - 2.20.
+3. HIGH - Aggressive play (e.g. Underdog win, Correct Score, 1X2 Draw). Target odds: 2.50 - 5.00.
+
+For each play, you MUST estimate "Fair Odds" based on the probability you see in the data.
+
+## OUTPUT FORMAT (JSON ONLY):
+{
+  "safe": {"market": "Match Result", "pick": "Home Win", "odds": 1.45, "confidence": 88, "reason": "..."},
+  "moderate": {"market": "Goals", "pick": "Over 2.5", "odds": 1.85, "confidence": 72, "reason": "..."},
+  "high": {"market": "Handicap", "pick": "Away -1", "odds": 3.40, "confidence": 45, "reason": "..."}
+}
+"""
+
+def ai_predict_best_plays(home: str, away: str, context: str) -> dict:
+    """Ask AI to suggest the best plays for a match based on search data."""
+    if not context or "failed" in context.lower():
+        return {}
+    
+    prompt = AI_PREDICTION_PROMPT.format(home=home, away=away, context=context[:2000])
+    ai_result = call_nvidia_ai(prompt, max_tokens=800)
+    
+    if ai_result:
+        try:
+            # Clean up potential markdown
+            raw = ai_result.strip()
+            if raw.startswith("```"):
+                raw = raw.strip("`").strip()
+                if raw.startswith("json"):
+                    raw = raw[4:].strip()
+            return json.loads(raw)
+        except Exception as e:
+            logger.warning(f"Failed to parse AI predictions for {home} vs {away}: {e}")
+    
+    return {}
+
+
 # ── MAIN ORCHESTRATOR ────────────────────────────────────────────────────────
 
 def analyze_slip_with_search(ocr_text: str, glm_client=None) -> str:

@@ -369,7 +369,10 @@ def _generate_target_reason(play: dict, tier: str, slip_name: str) -> str:
     implied = play.get("implied", 0)
     odds = play.get("odds", 0)
     market = play.get("market", "")
-    
+    # If source is AI Prediction, use the provided reasoning
+    if play.get("source") == "AI Prediction" and play.get("reasoning"):
+        return play.get("reasoning")
+
     parts = []
     
     if slip_name == "SAFE":

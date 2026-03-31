@@ -1,0 +1,43 @@
+﻿[
+  {
+    "commit": {
+      "createdAt": "2026-03-30T22:38:24Z",
+      "id": "29baff2e564b8e445ca174f3fc3e10792db16b42",
+      "message": "Fix Dockerfile: Replace libgl1-mesa-glx with libgl1 for debian trixie"
+    },
+    "createdAt": "2026-03-30T22:38:36.742275Z",
+    "id": "dep-d75fmr63jp1c73fcrah0",
+    "startedAt": "2026-03-30T22:38:36.739006Z",
+    "status": "build_in_progress",
+    "trigger": "new_commit",
+    "updatedAt": "2026-03-30T22:38:36.742275Z"
+  },
+  {
+    "commit": {
+      "createdAt": "2026-03-30T22:33:16Z",
+      "id": "e4c32cfce9b5e64c0768cfe87cb0747072aeb93c",
+      "message": "Fix Dockerfile RUN command syntax"
+    },
+    "createdAt": "2026-03-30T22:33:27.867532Z",
+    "finishedAt": "2026-03-30T22:34:24.047905Z",
+    "id": "dep-d75fkdshg0os739qfeig",
+    "startedAt": "2026-03-30T22:33:27.864075Z",
+    "status": "build_failed",
+    "trigger": "new_commit",
+    "updatedAt": "2026-03-30T22:34:24.048414Z"
+  },
+  {
+    "commit": {
+      "createdAt": "2026-03-30T22:16:43Z",
+      "id": "c2d46678b1ed5f42621a823154035898f7cbaedd",
+      "message": "Fix Render deployment: Docker-based env with Tesseract-OCR and improved orchestrator"
+    },
+    "createdAt": "2026-03-30T22:27:01.286068Z",
+    "finishedAt": "2026-03-30T22:27:19.630152Z",
+    "id": "dep-d75fhdbuibrs73bmslt0",
+    "startedAt": "2026-03-30T22:27:01.281739Z",
+    "status": "build_failed",
+    "trigger": "manual",
+    "updatedAt": "2026-03-30T22:27:19.630692Z"
+  }
+]
