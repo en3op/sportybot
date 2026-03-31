@@ -1145,12 +1145,19 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     except Exception as e:
         logger.error(f"Error processing photo: {e}", exc_info=True)
+        error_msg = (
+            "⚠️ An error occurred while processing your slip image.\n\n"
+            "**Possible causes:**\n"
+            "• Image too large or blurry\n"
+            "• Server load too high for OCR\n\n"
+            "**Fastest Fix:**\n"
+            "Please **type** the match names and send them as a message instead. For example:\n"
+            "`Man City vs Arsenal`"
+        )
         if 'progress_msg' in locals():
-            await _safe_edit(progress_msg,
-                "An error occurred while processing your slip. Please try again."
-            )
+            await _safe_edit(progress_msg, error_msg)
         else:
-            await update.message.reply_text("An error occurred while processing your slip.")
+            await update.message.reply_text(error_msg, parse_mode="Markdown")
 
     finally:
         if os.path.exists(tmp_path):
