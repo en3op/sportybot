@@ -509,11 +509,11 @@ Suggest exactly 3 plays for this match:
 For each play, you MUST estimate "Fair Odds" based on the probability you see in the data.
 
 ## OUTPUT FORMAT (JSON ONLY):
-{
-  "safe": {"market": "Match Result", "pick": "Home Win", "odds": 1.45, "confidence": 88, "reason": "..."},
-  "moderate": {"market": "Goals", "pick": "Over 2.5", "odds": 1.85, "confidence": 72, "reason": "..."},
-  "high": {"market": "Handicap", "pick": "Away -1", "odds": 3.40, "confidence": 45, "reason": "..."}
-}
+{{
+  "safe": {{"market": "Match Result", "pick": "Home Win", "odds": 1.45, "confidence": 88, "reason": "..."}},
+  "moderate": {{"market": "Goals", "pick": "Over 2.5", "odds": 1.85, "confidence": 72, "reason": "..."}},
+  "high": {{"market": "Handicap", "pick": "Away -1", "odds": 3.40, "confidence": 45, "reason": "..."}}
+}}
 """
 
 def ai_predict_best_plays(home: str, away: str, context: str) -> dict:
