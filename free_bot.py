@@ -1006,16 +1006,47 @@ async def cmd_analyze(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         context.user_data["awaiting_analyze"] = True
         return
 
-    progress = await update.message.reply_text("\u23f3 Fetching live odds for your games...")
-
+    progress = await update.message.reply_text("⏳ Analyzing matches with Professional AI Engine...")
+    
     try:
-        result = await _analyze_with_live_data(raw_text)
+        # Extract match pairs from text
+        match_pairs = get_match_names(raw_text)
+        if not match_pairs:
+            # Try splitting by lines if vs pattern not found
+            lines = [l.strip() for l in raw_text.split('\n') if l.strip()]
+            if len(lines) >= 1:
+                # Mock a vs pair for search if only one team name is given
+                for line in lines:
+                    if "vs" not in line.lower():
+                        match_pairs.append((line, "Unknown Opponent"))
+                    else:
+                        parts = re.split(r'\bvs?\.?\b', line, flags=re.IGNORECASE)
+                        if len(parts) >= 2:
+                            match_pairs.append((parts[0].strip(), parts[1].strip()))
+
+        if not match_pairs:
+            await progress.edit_text("❌ Could not identify any matches in your text. Please use 'Team A vs Team B' format.")
+            return
+
+        match_info = {}
+        match_plays = {}
+        for t1, t2 in match_pairs:
+            match_key = f"{t1} vs {t2}"
+            match_info[match_key] = {"home": t1, "away": t2, "league": "Unknown"}
+            match_plays[match_key] = []
+
+        # Run professional analysis
+        result, analysis_id = analyze_slip_enhanced(match_plays, match_info, use_search=True)
+        
+        if analysis_id:
+            context.user_data["last_analysis_id"] = analysis_id
+            
         await progress.delete()
-        await update.message.reply_text(result)
+        await update.message.reply_text(result, parse_mode="Markdown")
+        
     except Exception as e:
-        logger.error(f"Error analyzing slip: {e}", exc_info=True)
-        await progress.delete()
-        await update.message.reply_text(f"\u274c Error analyzing slip: {str(e)}")
+        logger.error(f"Error analyzing custom text: {e}", exc_info=True)
+        await progress.edit_text(f"❌ Error analysis failed: {str(e)}")
 
 
 async def handle_analyze_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1041,16 +1072,39 @@ async def handle_analyze_text(update: Update, context: ContextTypes.DEFAULT_TYPE
         await update.message.reply_text("\u274c No text detected. Try again with /analyze")
         return
 
-    progress = await update.message.reply_text("\u23f3 Fetching live odds for your games...")
-
+    progress = await update.message.reply_text("⏳ Analyzing text with Professional AI Engine...")
+    
     try:
-        result = await _analyze_with_live_data(raw_text)
+        match_pairs = get_match_names(raw_text)
+        if not match_pairs:
+            # Fallback for simple team lists
+            lines = [l.strip() for l in raw_text.split('\n') if l.strip()]
+            for line in lines:
+                if "vs" in line.lower():
+                    parts = re.split(r'\bvs?\.?\b', line, flags=re.IGNORECASE)
+                    if len(parts) >= 2:
+                        match_pairs.append((parts[0].strip(), parts[1].strip()))
+                else:
+                    match_pairs.append((line, "Unknown Opponent"))
+
+        match_info = {}
+        match_plays = {}
+        for t1, t2 in match_pairs:
+            match_key = f"{t1} vs {t2}"
+            match_info[match_key] = {"home": t1, "away": t2, "league": "Unknown"}
+            match_plays[match_key] = []
+
+        result, analysis_id = analyze_slip_enhanced(match_plays, match_info, use_search=True)
+        
+        if analysis_id:
+            context.user_data["last_analysis_id"] = analysis_id
+            
         await progress.delete()
-        await update.message.reply_text(result)
+        await update.message.reply_text(result, parse_mode="Markdown")
+        
     except Exception as e:
-        logger.error(f"Error analyzing text: {e}", exc_info=True)
-        await progress.delete()
-        await update.message.reply_text(f"\u274c Error analyzing slip: {str(e)}")
+        logger.error(f"Error analyzing text input: {e}", exc_info=True)
+        await progress.edit_text(f"❌ Analysis failed: {str(e)}")
 
 
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
