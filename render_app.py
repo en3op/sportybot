@@ -111,23 +111,23 @@ if __name__ == "__main__":
     # Check dependencies
     check_tesseract()
     
-    # Start bots in separate threads (not processes)
-    logger.info("Starting bot threads...")
-    vip_thread = threading.Thread(target=start_vip_bot, name="VIP-Bot-Thread", daemon=True)
-    free_thread = threading.Thread(target=start_free_bot, name="Free-Bot-Thread", daemon=True)
+    # Start bots in separate processes to avoid asyncio loop conflicts
+    import multiprocessing
+    logger.info("Starting bot processes...")
+    vip_process = multiprocessing.Process(target=start_vip_bot, name="VIP-Bot-Process", daemon=True)
+    free_process = multiprocessing.Process(target=start_free_bot, name="Free-Bot-Process", daemon=True)
     
-    vip_thread.start()
-    free_thread.start()
+    vip_process.start()
+    free_process.start()
     
-    logger.info("Bot threads started!")
+    logger.info("Bot processes started!")
     
     # Run Flask app (main thread)
     try:
         from app import app
         port = int(os.environ.get("PORT", 5000))
         logger.info(f"Starting Flask dashboard on port {port}")
-        # Use debug=False to avoid starting multiple instances in threads
-        app.run(host="0.0.0.0", port=port, debug=False)
+        app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
     except Exception as e:
         logger.error(f"Flask application failed: {e}")
     finally:
