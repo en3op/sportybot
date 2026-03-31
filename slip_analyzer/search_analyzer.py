@@ -28,7 +28,7 @@ try:
 except ImportError:
     USE_TAVILY = False
 
-TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "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") # Default key for testing
+TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "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")
 
 # ── NVIDIA NIM API CONFIG ───────────────────────────────────────────────────
 
