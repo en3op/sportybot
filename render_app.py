@@ -3,6 +3,7 @@ import logging
 import sqlite3
 import threading
 import time
+import traceback
 
 logging.basicConfig(
     level=logging.INFO,
@@ -79,6 +80,7 @@ def start_vip_bot():
         vip_main()
     except Exception as e:
         logger.error(f"VIP bot thread failed: {e}")
+        logger.error(traceback.format_exc())
 
 def start_free_bot():
     """Start the Free bot from its runner module."""
@@ -88,6 +90,7 @@ def start_free_bot():
         free_main()
     except Exception as e:
         logger.error(f"Free bot thread failed: {e}")
+        logger.error(traceback.format_exc())
 
 def check_tesseract():
     """Verify if Tesseract-OCR is installed and accessible."""
