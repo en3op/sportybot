@@ -228,16 +228,31 @@
                     <i class="fas fa-crown"></i> VIP Management
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'free_users' %}active{% endif %}" href="{{ url_for('free_users') }}">
+                    <i class="fas fa-user-friends"></i> Free Bot Users
+                </a>
+            </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint in ['fixtures', 'refresh_fixtures'] %}active{% endif %}" href="{{ url_for('fixtures') }}">
-                        <i class="fas fa-futbol"></i> Fixtures & Picks
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint == 'schedule' %}active{% endif %}" href="{{ url_for('schedule') }}">
-                        <i class="fas fa-calendar-week"></i> 7-Day Schedule
-                    </a>
-                </li>
+                <a class="nav-link {% if request.endpoint == 'free_users' %}active{% endif %}" href="{{ url_for('free_users') }}">
+                    <i class="fas fa-user-friends"></i> Free Bot Users
+                </a>
+            </li>
+<li class="nav-item">
+        <a class="nav-link {% if request.endpoint in ['fixtures', 'refresh_fixtures'] %}active{% endif %}" href="{{ url_for('fixtures') }}">
+            <i class="fas fa-futbol"></i> Fixtures & Picks
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'vip_slips' %}active{% endif %}" href="{{ url_for('vip_slips') }}">
+            <i class="fas fa-crown"></i> VIP Slips
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.endpoint == 'schedule' %}active{% endif %}" href="{{ url_for('schedule') }}">
+            <i class="fas fa-calendar-week"></i> 7-Day Schedule
+        </a>
+    </li>
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint == 'results' %}active{% endif %}" href="{{ url_for('results') }}">
                         <i class="fas fa-check-circle"></i> Recent Results

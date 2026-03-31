@@ -1,0 +1,290 @@
+{% extends "layout.html" %}
+{% block title %}VIP Slips - SportyBot{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+    <div>
+        <h2>🎯 VIP Slips Management</h2>
+        <p class="text-muted mb-0">Generate, shuffle, and approve today's VIP picks</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('vip_slips') }}" class="btn btn-outline-light">
+            <i class="fas fa-refresh me-1"></i> Regenerate All
+        </a>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<!-- Stats Bar -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-primary">{{ matches|length }}</h4>
+                <small class="text-muted">Matches Available</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-success">{{ slips.metadata.total_picks_available }}</h4>
+                <small class="text-muted">Total Picks</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-info" id="generated-time">{{ slips.metadata.generated_at[:19] if slips.metadata.generated_at else 'N/A' }}</h4>
+                <small class="text-muted">Generated At</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-warning">{% if slips.metadata.ai_generated %}✓ AI{% else %}Rule-Based{% endif %}</h4>
+                <small class="text-muted">Generation Method</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Three Slips -->
+<div class="row g-4 mb-4">
+    <!-- SLIP A - SAFE -->
+    <div class="col-md-4">
+        <div class="card h-100 border-success">
+            <div class="card-header bg-success bg-opacity-25 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-success">
+                    <i class="fas fa-shield-alt me-2"></i>SLIP A
+                </h5>
+                <span class="badge bg-success">{{ slips.slip_a.combined_odds }}x</span>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <span class="badge bg-success bg-opacity-50">SAFE</span>
+                    <small class="text-muted ms-2">Target: 2.5-4.0x</small>
+                </div>
+                {% if slips.slip_a.summary %}
+                <p class="text-muted small mb-3"><i class="fas fa-lightbulb me-1"></i>{{ slips.slip_a.summary }}</p>
+                {% endif %}
+                
+                <div class="list-group list-group-flush">
+                    {% for p in slips.slip_a.picks %}
+                    <div class="list-group-item bg-transparent">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <strong>{{ p.home }}</strong> <span class="text-muted">vs</span> <strong>{{ p.away }}</strong><br>
+                                <small class="text-muted">{{ p.league }}</small><br>
+                                <small class="text-info"><i class="far fa-clock me-1"></i>{{ p.time }} {{ p.date if p.date else '' }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-success bg-opacity-50">{{ p.odds }}</span><br>
+                                <small class="text-muted">{{ p.confidence }}%</small>
+                            </div>
+                        </div>
+                        <div class="mt-1">
+                            <span class="badge bg-secondary">{{ p.market }}</span>
+                            <span class="text-success">{{ p.pick }}</span>
+                        </div>
+                        {% if p.reasoning %}
+                        <small class="text-muted d-block mt-1">💡 {{ p.reasoning[:80] }}{% if p.reasoning|length > 80 %}...{% endif %}</small>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-3">No picks available</div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer">
+                <form method="POST" action="{{ url_for('shuffle_slip', slip_type='slip_a') }}">
+                    <input type="hidden" name="current_slips" value='{{ slips|tojson }}'>
+                    <button type="submit" class="btn btn-outline-success w-100">
+                        <i class="fas fa-random me-1"></i> Shuffle SLIP A
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIP B - MODERATE -->
+    <div class="col-md-4">
+        <div class="card h-100 border-warning">
+            <div class="card-header bg-warning bg-opacity-25 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-warning">
+                    <i class="fas fa-balance-scale me-2"></i>SLIP B
+                </h5>
+                <span class="badge bg-warning">{{ slips.slip_b.combined_odds }}x</span>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <span class="badge bg-warning bg-opacity-50">MODERATE</span>
+                    <small class="text-muted ms-2">Target: 4.0-7.0x</small>
+                </div>
+                {% if slips.slip_b.summary %}
+                <p class="text-muted small mb-3"><i class="fas fa-lightbulb me-1"></i>{{ slips.slip_b.summary }}</p>
+                {% endif %}
+                
+                <div class="list-group list-group-flush">
+                    {% for p in slips.slip_b.picks %}
+                    <div class="list-group-item bg-transparent">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <strong>{{ p.home }}</strong> <span class="text-muted">vs</span> <strong>{{ p.away }}</strong><br>
+                                <small class="text-muted">{{ p.league }}</small><br>
+                                <small class="text-info"><i class="far fa-clock me-1"></i>{{ p.time }} {{ p.date if p.date else '' }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-warning bg-opacity-50">{{ p.odds }}</span><br>
+                                <small class="text-muted">{{ p.confidence }}%</small>
+                            </div>
+                        </div>
+                        <div class="mt-1">
+                            <span class="badge bg-secondary">{{ p.market }}</span>
+                            <span class="text-warning">{{ p.pick }}</span>
+                        </div>
+                        {% if p.reasoning %}
+                        <small class="text-muted d-block mt-1">💡 {{ p.reasoning[:80] }}{% if p.reasoning|length > 80 %}...{% endif %}</small>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-3">No picks available</div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer">
+                <form method="POST" action="{{ url_for('shuffle_slip', slip_type='slip_b') }}">
+                    <input type="hidden" name="current_slips" value='{{ slips|tojson }}'>
+                    <button type="submit" class="btn btn-outline-warning w-100">
+                        <i class="fas fa-random me-1"></i> Shuffle SLIP B
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIP C - HIGH -->
+    <div class="col-md-4">
+        <div class="card h-100 border-danger">
+            <div class="card-header bg-danger bg-opacity-25 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-danger">
+                    <i class="fas fa-rocket me-2"></i>SLIP C
+                </h5>
+                <span class="badge bg-danger">{{ slips.slip_c.combined_odds }}x</span>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <span class="badge bg-danger bg-opacity-50">HIGH</span>
+                    <small class="text-muted ms-2">Target: 7.0-15.0x</small>
+                </div>
+                {% if slips.slip_c.summary %}
+                <p class="text-muted small mb-3"><i class="fas fa-lightbulb me-1"></i>{{ slips.slip_c.summary }}</p>
+                {% endif %}
+                
+                <div class="list-group list-group-flush">
+                    {% for p in slips.slip_c.picks %}
+                    <div class="list-group-item bg-transparent">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <strong>{{ p.home }}</strong> <span class="text-muted">vs</span> <strong>{{ p.away }}</strong><br>
+                                <small class="text-muted">{{ p.league }}</small><br>
+                                <small class="text-info"><i class="far fa-clock me-1"></i>{{ p.time }} {{ p.date if p.date else '' }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-danger bg-opacity-50">{{ p.odds }}</span><br>
+                                <small class="text-muted">{{ p.confidence }}%</small>
+                            </div>
+                        </div>
+                        <div class="mt-1">
+                            <span class="badge bg-secondary">{{ p.market }}</span>
+                            <span class="text-danger">{{ p.pick }}</span>
+                        </div>
+                        {% if p.reasoning %}
+                        <small class="text-muted d-block mt-1">💡 {{ p.reasoning[:80] }}{% if p.reasoning|length > 80 %}...{% endif %}</small>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-3">No picks available</div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer">
+                <form method="POST" action="{{ url_for('shuffle_slip', slip_type='slip_c') }}">
+                    <input type="hidden" name="current_slips" value='{{ slips|tojson }}'>
+                    <button type="submit" class="btn btn-outline-danger w-100">
+                        <i class="fas fa-random me-1"></i> Shuffle SLIP C
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body d-flex flex-column flex-md-row gap-3 justify-content-center">
+                <form method="POST" action="{{ url_for('approve_vip_slips') }}" class="d-inline">
+                    <input type="hidden" name="slips_data" value='{{ slips|tojson }}'>
+                    <button type="submit" class="btn btn-success btn-lg" onclick="return confirm('Approve these 3 slips for today?')">
+                        <i class="fas fa-check-circle me-2"></i> Approve Slips of the Day
+                    </button>
+                </form>
+                
+                <form method="POST" action="{{ url_for('send_vip_slips') }}" class="d-inline">
+                    <button type="submit" class="btn btn-primary btn-lg" onclick="return confirm('Send approved slips to all active VIPs?')">
+                        <i class="fas fa-paper-plane me-2"></i> Send to VIPs
+                    </button>
+                </form>
+                
+                <a href="{{ url_for('fixtures') }}" class="btn btn-outline-secondary btn-lg">
+                    <i class="fas fa-calendar me-2"></i> View Fixtures
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Available Matches -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-futbol me-2"></i>Available Matches ({{ matches|length }})</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
+            {% for m in matches %}
+            <div class="list-group-item bg-transparent">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ m.home_team }}</strong> <span class="text-muted">vs</span> <strong>{{ m.away_team }}</strong><br>
+                        <small class="text-muted">{{ m.league }} | {{ m.match_date[11:16] if m.match_date else 'TBD' }}</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-secondary">{{ m.predictions|length }} picks</span>
+                    </div>
+                </div>
+                {% if m.predictions %}
+                <div class="mt-1">
+                    {% for p in m.predictions[:2] %}
+                    <span class="badge bg-info bg-opacity-50 me-1">{{ p.market }}: {{ p.pick }} @ {{ p.odds }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="text-center text-muted py-4">No matches with approved predictions</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

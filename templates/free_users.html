@@ -1,0 +1,259 @@
+{% extends "layout.html" %}
+{% block title %}Free Bot Users - SportyBot{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+    <div>
+        <h2>Free Bot Users</h2>
+        <p class="text-muted mb-0">Track free bot users, interactions, and VIP upgrades</p>
+    </div>
+    <div class="d-flex gap-2">
+        <form method="get" class="d-flex gap-2">
+            <input type="text" name="search" class="form-control form-control-sm" placeholder="Search users..." value="{{ search }}" style="width:200px;">
+            <button type="submit" class="btn btn-sm btn-outline-light">Search</button>
+            {% if search %}
+            <a href="{{ url_for('free_users') }}" class="btn btn-sm btn-secondary">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon" style="background:rgba(99,102,241,0.15);color:#6366f1;">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="ms-3">
+                    <div class="text-muted small">Total Users</div>
+                    <div class="stat-number">{{ total_users }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon" style="background:rgba(34,197,94,0.15);color:#22c55e;">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <div class="ms-3">
+                    <div class="text-muted small">Slips Analyzed</div>
+                    <div class="stat-number">{{ total_slips }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon" style="background:rgba(245,158,11,0.15);color:#f59e0b;">
+                    <i class="fas fa-crown"></i>
+                </div>
+                <div class="ms-3">
+                    <div class="text-muted small">VIP Upgrades</div>
+                    <div class="stat-number">{{ vip_count }} <span class="small text-muted">({{ active_vip_count }} active)</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon" style="background:rgba(168,85,247,0.15);color:#a855f7;">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="ms-3">
+                    <div class="text-muted small">Conversion Rate</div>
+                    <div class="stat-number">{% if total_users > 0 %}{{ (vip_count / total_users * 100)|round(1) }}%{% else %}0%{% endif %}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-user-friends me-2"></i>
+            All Users
+        </h5>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('free_users', sort='last_seen') }}" class="btn btn-sm btn-outline-light">Last Seen</a>
+            <a href="{{ url_for('free_users', sort='total_slips_analyzed') }}" class="btn btn-sm btn-outline-light">Most Active</a>
+            <a href="{{ url_for('free_users', sort='first_seen') }}" class="btn btn-sm btn-outline-light">Newest</a>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if users %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:8%">ID</th>
+                        <th style="width:15%">Username</th>
+                        <th style="width:12%">Name</th>
+                        <th style="width:10%">Interactions</th>
+                        <th style="width:10%">Slips</th>
+                        <th style="width:10%">Status</th>
+                        <th style="width:12%">Last Seen</th>
+                        <th style="width:10%">First Seen</th>
+                        <th style="width:13%">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for u in users %}
+                    <tr>
+                        <td class="small text-muted">{{ u.user_id }}</td>
+                        <td>
+                            {% if u.username %}
+                                <a href="https://t.me/{{ u.username }}" target="_blank" class="text-decoration-none">@{{ u.username }}</a>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ u.first_name or '' }} {{ u.last_name or '' }}</td>
+                        <td>{{ u.total_interactions }}</td>
+                        <td>
+                            {% if u.total_slips_analyzed > 0 %}
+                                <span class="badge bg-success">{{ u.total_slips_analyzed }}</span>
+                            {% else %}
+                                <span class="text-muted">0</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if u.vip_active %}
+                                <span class="badge bg-warning text-dark"><i class="fas fa-crown me-1"></i>VIP</span>
+                            {% elif u.is_vip %}
+                                <span class="badge bg-secondary"><i class="fas fa-crown me-1"></i>Expired VIP</span>
+                            {% else %}
+                                <span class="badge bg-primary">Free</span>
+                            {% endif %}
+                        </td>
+                        <td class="small">{{ u.last_seen }}</td>
+                        <td class="small">{{ u.first_seen }}</td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-info" onclick="viewUserDetails({{ u.user_id }})" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                {% if not u.is_vip %}
+                                <button class="btn btn-sm btn-outline-warning" onclick="markAsVIP({{ u.user_id }}, '{{ u.username or '' }}')" title="Mark as VIP Upgrade">
+                                    <i class="fas fa-crown"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="fas fa-users-slash fa-3x mb-3"></i>
+            <h5>No users found</h5>
+            <p class="mb-0">Users will appear here once they interact with the free bot.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- User Details Modal -->
+<div class="modal fade" id="userDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title"><i class="fas fa-user me-2"></i>User Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="userDetailsBody">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function viewUserDetails(userId) {
+    const modal = new bootstrap.Modal(document.getElementById('userDetailsModal'));
+    document.getElementById('userDetailsBody').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
+    modal.show();
+    
+    fetch('/api/free-users/' + userId)
+        .then(r => r.json())
+        .then(data => {
+            let html = '<div class="row">';
+            html += '<div class="col-md-6">';
+            html += '<h6>User Info</h6>';
+            html += '<table class="table table-sm table-borderless">';
+            html += '<tr><td class="text-muted">ID:</td><td>' + data.user_id + '</td></tr>';
+            html += '<tr><td class="text-muted">Username:</td><td>' + (data.username || '-') + '</td></tr>';
+            html += '<tr><td class="text-muted">Name:</td><td>' + (data.first_name || '') + ' ' + (data.last_name || '') + '</td></tr>';
+            html += '<tr><td class="text-muted">First Seen:</td><td>' + data.first_seen + '</td></tr>';
+            html += '<tr><td class="text-muted">Last Seen:</td><td>' + data.last_seen + '</td></tr>';
+            html += '<tr><td class="text-muted">Interactions:</td><td>' + data.total_interactions + '</td></tr>';
+            html += '<tr><td class="text-muted">Slips Analyzed:</td><td>' + data.total_slips_analyzed + '</td></tr>';
+            html += '</table></div>';
+            html += '<div class="col-md-6">';
+            html += '<h6>VIP Status</h6>';
+            if (data.is_vip && data.vip_info) {
+                html += '<div class="badge bg-warning text-dark mb-2"><i class="fas fa-crown me-1"></i>VIP User</div>';
+                html += '<table class="table table-sm table-borderless">';
+                html += '<tr><td class="text-muted">Added:</td><td>' + data.vip_info.added_date + '</td></tr>';
+                html += '<tr><td class="text-muted">Expires:</td><td>' + data.vip_info.expiry_date + '</td></tr>';
+                html += '</table>';
+            } else {
+                html += '<div class="badge bg-primary mb-2">Free User</div>';
+                html += '<p class="text-muted small">Has not upgraded to VIP yet.</p>';
+            }
+            html += '</div></div>';
+            
+            if (data.recent_interactions && data.recent_interactions.length > 0) {
+                html += '<h6 class="mt-3">Recent Interactions</h6>';
+                html += '<div class="table-responsive"><table class="table table-sm table-hover">';
+                html += '<thead><tr><th>Action</th><th>Details</th><th>Time</th></tr></thead><tbody>';
+                data.recent_interactions.forEach(function(i) {
+                    html += '<tr><td><span class="badge bg-secondary">' + i.action + '</span></td>';
+                    html += '<td class="small text-truncate" style="max-width:300px;">' + (i.details || '-') + '</td>';
+                    html += '<td class="small text-muted">' + i.created_at + '</td></tr>';
+                });
+                html += '</tbody></table></div>';
+            }
+            
+            document.getElementById('userDetailsBody').innerHTML = html;
+        })
+        .catch(() => {
+            document.getElementById('userDetailsBody').innerHTML = '<div class="text-center text-danger py-4">Failed to load user details</div>';
+        });
+}
+
+function markAsVIP(userId, username) {
+    if (!confirm('Mark user ' + (username || userId) + ' as a VIP upgrade?')) return;
+    
+    fetch('/api/free-users/' + userId + '/upgrade', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'username=' + encodeURIComponent(username) + '&source=manual'
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error marking user as VIP');
+        }
+    });
+}
+</script>
+{% endblock %}

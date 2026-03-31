@@ -1,34 +1,24 @@
-"""
-Search-Based Slip Analyzer
-==========================
-Analyzes betting slips using live DuckDuckGo search for each match.
-Returns verdicts (KEEP/RISKY/DROP) based on real-time form and prediction data.
-Uses NVIDIA NIM API for AI analysis.
-"""
+""" 
+Search-Based Slip Analyzer 
+========================== 
+Analyzes betting slips using DuckDuckGo search for match data. 
+Returns 3 slip tiers (SAFE/MODERATE/HIGH) based on the user's matches only.
+Uses NVIDIA NIM API for AI analysis. 
+""" 
 
-import json
-import time
-import logging
-import os
-import re
-import concurrent.futures
-from datetime import datetime
-from typing import Optional
+import json 
+import time 
+import logging 
+import os 
+import re 
+from datetime import datetime 
+from typing import Optional 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from duckduckgo_search import DDGS
-try:
-    from ddgs import DDGS as DDGS2
-    USE_DDGS = True
-except ImportError:
-    USE_DDGS = False
+logger = logging.getLogger(__name__) 
 
-try:
-    from tavily import TavilyClient
-    USE_TAVILY = True
-except ImportError:
-    USE_TAVILY = False
-
-TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "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")
+USE_DDGS = True 
+USE_TAVILY = False
 
 # ── NVIDIA NIM API CONFIG ───────────────────────────────────────────────────
 
@@ -42,7 +32,9 @@ def get_nvidia_client():
         from openai import OpenAI
         return OpenAI(
             base_url="https://integrate.api.nvidia.com/v1",
-            api_key=NVIDIA_API_KEY
+            api_key=NVIDIA_API_KEY,
+            timeout=60.0,
+            max_retries=2
         )
     except Exception as e:
         logger.warning(f"Could not initialize NVIDIA client: {e}")
@@ -68,47 +60,22 @@ def call_nvidia_ai(prompt: str, max_tokens: int = 1000) -> Optional[str]:
         return None
 
 
-# ── CACHED SEARCH WITH RETRY ────────────────────────────────────────────────
-
-def search_match_with_retry(home: str, away: str, max_retries: int = 3) -> dict:
+def search_match_with_retry(home: str, away: str, max_retries: int = 1) -> dict:
     """
-    Search for match context with caching and retry logic.
-    
-    Returns:
-        dict with: tier, form_home, form_away, search_context, verdict, etc.
+    Search for match context with caching.
     """
     from .match_search_cache import get_cache
-    from .tier_classifier import classify_match_tier
-    
+
     cache = get_cache()
-    
-    # Check cache first
     cached = cache.get(home, away)
     if cached:
         return cached
-    
-    # Search with retry
-    search_context = ""
-    for attempt in range(max_retries):
-        try:
-            search_context = search_match_context(home, away)
-            if search_context and "failed" not in search_context.lower():
-                break
-        except Exception as e:
-            logger.warning(f"Search attempt {attempt+1} failed for {home} vs {away}: {e}")
-            if attempt < max_retries - 1:
-                time.sleep(2)
-    
-    # Extract form data from search context
+
+    search_context = search_match_context(home, away)
     form_home, form_away = _extract_form_from_context(search_context)
-    
-    # Classify tier (will use odds data separately)
-    tier = "C"  # Default, will be refined with odds
-    
-    # Determine verdict based on search context
+    tier = "C"
     verdict = _determine_verdict(search_context, form_home, form_away)
-    
-    # Build result
+
     result = {
         "home_team": home,
         "away_team": away,
@@ -119,334 +86,118 @@ def search_match_with_retry(home: str, away: str, max_retries: int = 3) -> dict:
         "position_away": 0,
         "goals_home": 0.0,
         "goals_away": 0.0,
-        "search_context": search_context[:500] if search_context else "",
-        "analysis_summary": _summarize_context(search_context),
+        "search_context": search_context,
         "verdict": verdict,
-        "source": "search"
     }
-    
-    # Cache the result
-    cache.set(home, away, result)
-    
+    cache.put(home, away, result)
     return result
 
 
-def search_matches_batch(matches: list, progress_callback=None) -> dict:
-    """
-    Search multiple matches sequentially with progress reporting.
-    
-    Args:
-        matches: List of dicts with 'home' and 'away' team names
-        progress_callback: Optional callback(current, total, match_key)
-    
-    Returns:
-        dict keyed by "home vs away" with search results
-    """
-    results = {}
-    total = len(matches)
-    
-    for idx, match in enumerate(matches):
-        home = match.get("home", match.get("home_team", ""))
-        away = match.get("away", match.get("away_team", ""))
-        
-        if not home or not away:
-            continue
-        
-        match_key = f"{home} vs {away}"
-        
-        # Report progress
-        if progress_callback:
-            progress_callback(idx + 1, total, match_key)
-        
-        # Search with retry
-        result = search_match_with_retry(home, away)
-        results[match_key] = result
-        
-        # Rate limiting
-        if idx < total - 1:
-            time.sleep(1)
-    
-    return results
+def search_match_context(home: str, away: str) -> str:
+    """Search DuckDuckGo for form and prediction data for a fixture."""
+    query = f"{home} vs {away} football form results 2024 2025"
+    try:
+        if USE_TAVILY:
+            from tavily import TavilyClient
+            client = TavilyClient(api_key=os.environ.get("TAVILY_API_KEY", ""))
+            results = client.search(query, max_results=3)
+            return " ".join([r.get("content", "") for r in results.get("results", [])])
+    except Exception:
+        pass
+
+    if USE_DDGS:
+        try:
+            from ddgs import DDGS as DDGS2
+            with DDGS2() as ddgs:
+                results = list(ddgs.text(query, max_results=3))
+                return " ".join([r.get("body", "") for r in results])
+        except Exception:
+            try:
+                from duckduckgo_search import DDGS
+                with DDGS() as ddgs:
+                    results = ddgs.text(query, max_results=3)
+                    return " ".join([r.get("body", "") for r in results])
+            except Exception as e:
+                logger.warning(f"DDGS search failed for {home} vs {away}: {e}")
+    return f"Search failed for {home} vs {away}"
 
 
 def _extract_form_from_context(context: str) -> tuple:
     """Extract form strings from search context."""
-    import re
+    form_home = "Unknown"
+    form_away = "Unknown"
     
-    form_home = ""
-    form_away = ""
+    form_patterns = [
+        r'([WDLLwdl]{3,10})\s*[-–]\s*([WDLLwdl]{3,10})',
+        r'(?:form|last 5|last 6)\s*[:\-]\s*([A-Za-z]{3,10})',
+        r'([A-Za-z]{3,10})\s*(?:form|last)',
+    ]
     
-    if not context:
-        return form_home, form_away
-    
-    # Look for form patterns like "WWLDW" or "W D L W W"
-    form_pattern = re.compile(r'\b[WDL]{3,5}\b')
-    forms = form_pattern.findall(context.upper())
-    
-    if len(forms) >= 2:
-        form_home = forms[0]
-        form_away = forms[1]
-    elif len(forms) == 1:
-        form_home = forms[0]
+    for pattern in form_patterns:
+        match = re.search(pattern, context, re.IGNORECASE)
+        if match:
+            if match.lastindex and match.lastindex >= 2:
+                form_home = match.group(1).upper()
+                form_away = match.group(2).upper()
+            else:
+                form_home = match.group(1).upper()
+            break
     
     return form_home, form_away
 
 
 def _determine_verdict(context: str, form_home: str, form_away: str) -> str:
-    """Determine KEEP/RISKY/DROP verdict from context."""
-    if not context or "failed" in context.lower():
-        return "RISKY"
-    
+    """Determine a simple verdict based on search context."""
     context_lower = context.lower()
-    
-    # Positive indicators
-    positive = ["win", "favorite", "strong", "good form", "unbeaten", "dominant"]
-    # Negative indicators
-    negative = ["loss", "lose", "poor", "struggling", "injured", "suspend"]
-    
-    pos_count = sum(1 for p in positive if p in context_lower)
-    neg_count = sum(1 for n in negative if n in context_lower)
-    
-    # Form check
-    if form_home:
-        home_wins = form_home.count("W")
-        if home_wins >= 3:
-            pos_count += 2
-        elif home_wins <= 1:
-            neg_count += 1
-    
-    if pos_count >= 2 and neg_count == 0:
+    if "win" in context_lower or "favorite" in context_lower:
         return "KEEP"
-    elif neg_count >= 2:
-        return "DROP"
-    else:
+    elif "risk" in context_lower or "uncertain" in context_lower:
         return "RISKY"
+    return "RISKY"
 
 
-def _summarize_context(context: str) -> str:
-    """Create a brief summary of search context."""
-    if not context:
-        return "No data found"
-    
-    # Extract key phrases
-    lines = context.split("\n")
-    summary_parts = []
-    
-    for line in lines[:3]:
-        if len(line) > 10 and "source" not in line.lower():
-            # Truncate long lines
-            summary = line[:80] + "..." if len(line) > 80 else line
-            summary_parts.append(summary)
-    
-    return " | ".join(summary_parts[:2]) if summary_parts else "Limited data"
-
-# ── PROMPT 1: EXTRACTION ────────────────────────────────────────────────────
-
-EXTRACTION_PROMPT = """
-Extract all football matches from this OCR text and return ONLY a JSON array.
-No explanation, no markdown, no backticks. Just raw JSON.
-
-Each object must have:
-{
-  "match_id": 1,
-  "home_team": "Full team name",
-  "away_team": "Full team name",
-  "market": "1X2 or BTTS or Over 2.5 or Under 2.5 etc",
-  "odds": 1.85,
-  "user_pick": "Home or Away or Draw or Yes or No or Over or Under"
-}
-
-Rules:
-- Normalize short names (Man Utd → Manchester United, B. Munich → Bayern Munich)
-- If odds not visible set to null
-- Infer market if unclear (1 = Home win, 2 = Away win, X = Draw)
-- If less than 2 matches found return exactly: {"error": "unclear_image"}
-
-OCR TEXT:
-{ocr_text}
-"""
-
-# ── SEARCH FUNCTION ─────────────────────────────────────────────────────────
-
-def search_match_context(home: str, away: str) -> str:
-    """Multi-source search for football stats with automatic fallback."""
-    
-    def _search_tavily():
-        if not USE_TAVILY: return None
-        try:
-            client = TavilyClient(api_key=TAVILY_API_KEY)
-            query = f"{home} vs {away} football stats injuries form {datetime.now().strftime('%B %Y')}"
-            response = client.search(query=query, search_depth="advanced", max_results=5)
-            
-            context = "=== TAVILY SEARCH DATA ===\n"
-            for r in response.get('results', []):
-                context += f"Source: {r.get('title')}\n{r.get('content')}\n\n"
-            return context.strip() if response.get('results') else None
-        except Exception as e:
-            logger.warning(f"Tavily search failed: {e}")
-            return None
-
-    def _search_ddg():
-        month_year = datetime.now().strftime("%B %Y")
-        query = f"{home} vs {away} pre-game form stats injuries {month_year}"
-        try:
-            if USE_DDGS:
-                with DDGS2() as ddgs:
-                    results = list(ddgs.text(query, max_results=5))
-                    if not results: return None
-                    context = "=== DDG SEARCH DATA ===\n"
-                    for i, r in enumerate(results, 1):
-                        context += f"Source {i}: {r.get('title', '')}\n{r.get('body', '')}\n\n"
-                    return context.strip()
-            return None
-        except Exception as e:
-            logger.warning(f"DDG search failed: {e}")
-            return None
-
-    # execution logic
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-        # Try Tavily first (most reliable)
-        future_tavily = executor.submit(_search_tavily)
-        try:
-            res = future_tavily.result(timeout=10)
-            if res: return res
-        except: pass
-
-        # Fallback to DDG
-        logger.info(f"Tavily failed/timed out for {home} vs {away}, falling back to DDG")
-        future_ddg = executor.submit(_search_ddg)
-        try:
-            res = future_ddg.result(timeout=10)
-            if res: return res
-        except: pass
-
-    logger.warning(f"All search sources failed for {home} vs {away}. Using AI baseline.")
-    return "SEARCH FAILED: Please use your internal professional knowledge for this match."
-
-
-def build_search_context(matches: list) -> dict:
-    """Run a search for every match and return a dict keyed by match_id."""
-    context_map = {}
-    for match in matches:
-        match_id = match.get("match_id", 0)
-        home = match.get("home_team", "")
-        away = match.get("away_team", "")
-        
-        if not home or not away:
-            continue
-            
-        logger.info(f"Searching: {home} vs {away}...")
-        context_map[match_id] = search_match_context(home, away)
-        time.sleep(1)  # Avoid rate limiting
-    
-    return context_map
-
-
-# ── PROMPT 2: ANALYSIS WITH CONTEXT ─────────────────────────────────────────
-
-def build_analysis_prompt(matches: list, context_map: dict) -> str:
-    context_block = ""
-    for match in matches:
-        mid = match.get("match_id", 0)
-        home = match.get("home_team", "Unknown")
-        away = match.get("away_team", "Unknown")
-        market = match.get("market", "Unknown")
-        odds = match.get("odds", "N/A")
-        user_pick = match.get("user_pick", "Unknown")
-        
-        context_block += f"""
-Match {mid}: {home} vs {away}
-Market: {market} | Pick: {user_pick} | Odds: {odds}
-Live Search Context:
-{context_map.get(mid, 'No data found')}
-{"─" * 50}
-"""
-    
-    return f"""
-You are a football betting slip analyzer for a Telegram bot.
-You have been given live search data for each match in the user's betting slip.
-
-Use the search context as your PRIMARY source. Only use training knowledge if search context is empty or unclear.
-
-## MATCHES AND LIVE CONTEXT:
-{context_block}
-
-## YOUR TASK:
-Analyze each match and return a verdict using this logic:
-- KEEP ✅ — Form + H2H support the pick, odds are fair
-- RISKY ⚠️ — One factor goes against the pick
-- DROP ❌ — Two or more factors go against the pick
-
-If search context has no useful data for a match, say: "Limited data found — verify independently" and mark as RISKY.
-
-## STRICT RULES:
-- Never fabricate specific stats (e.g. "won 4 of last 5") unless confirmed in search context
-- Keep reasons to one sentence per leg
-- Always show the upgrade CTA at the end
-
-## OUTPUT FORMAT (use exactly):
-
-🧾 *SLIP ANALYSIS*
-
-[For each match:]
-1. *[Home] vs [Away]* — [Market] @ [Odds]
-Verdict: [KEEP ✅ / RISKY ⚠️ / DROP ❌]
-Reason: [One sentence using search context]
-
----
-
-📊 *Overall: [Strong Slip ✅ / Decent Slip ⚠️ / Weak Slip ❌]*
-[One line summary]
-
-⚡ *Want me to fix the risky legs and rebuild this slip with better picks?*
-*Upgrade to VIP 👉 [link]*
-"""
-
-
-# ── TEAM NAME NORMALIZATION ────────────────────────────────────────────────
+# ── OCR PARSER ──────────────────────────────────────────────────────────────
 
 TEAM_NORMALIZATIONS = {
+    "man city": "Manchester City",
     "man utd": "Manchester United",
     "man united": "Manchester United",
-    "man city": "Manchester City",
-    "b. munich": "Bayern Munich",
-    "bayern": "Bayern Munich",
-    "psg": "Paris Saint-Germain",
-    "real": "Real Madrid",
-    "barca": "Barcelona",
-    "atletico": "Atletico Madrid",
-    "inter": "Inter Milan",
-    "ac milan": "Milan",
     "tottenham": "Tottenham Hotspur",
     "spurs": "Tottenham Hotspur",
-    "newcastle": "Newcastle United",
-    "brighton": "Brighton & Hove Albion",
-    "west ham": "West Ham United",
-    "aston villa": "Aston Villa",
     "wolves": "Wolverhampton Wanderers",
-    "nottingham": "Nottingham Forest",
+    "newcastle": "Newcastle United",
+    "west ham": "West Ham United",
+    "nottm forest": "Nottingham Forest",
     "forest": "Nottingham Forest",
-    "leicester": "Leicester City",
-    "everton": "Everton",
-    "fulham": "Fulham",
-    "crystal palace": "Crystal Palace",
     "bournemouth": "AFC Bournemouth",
-    "brentford": "Brentford",
-    "liverpool": "Liverpool",
-    "chelsea": "Chelsea",
-    "arsenal": "Arsenal",
-    "juventus": "Juventus",
-    "napoli": "Napoli",
-    "roma": "AS Roma",
-    "lazio": "Lazio",
+    "aston villa": "Aston Villa",
+    "crystal palace": "Crystal Palace",
+    "palace": "Crystal Palace",
+    "brighton": "Brighton & Hove Albion",
+    "fulham": "Fulham FC",
+    "brentford": "Brentford FC",
+    "everton": "Everton FC",
+    "leicester": "Leicester City",
+    "ipswich": "Ipswich Town",
+    "southampton": "Southampton FC",
+    "barcelona": "FC Barcelona",
+    "real madrid": "Real Madrid CF",
+    "atletico": "Atletico Madrid",
+    "atletico madrid": "Atletico Madrid",
+    "bayern": "Bayern Munich",
+    "bayern munich": "Bayern Munich",
     "dortmund": "Borussia Dortmund",
-    "leipzig": "RB Leipzig",
     "leverkusen": "Bayer Leverkusen",
-    "frankfurt": "Eintracht Frankfurt",
-    "monaco": "AS Monaco",
-    "marseille": "Olympique Marseille",
-    "lyon": "Olympique Lyon",
-    "ajax": "Ajax",
+    "psg": "Paris Saint-Germain",
+    "paris sg": "Paris Saint-Germain",
+    "juventus": "Juventus FC",
+    "inter": "Inter Milan",
+    "inter milan": "Inter Milan",
+    "ac milan": "AC Milan",
+    "milan": "AC Milan",
+    "roma": "AS Roma",
+    "lazio": "SS Lazio",
+    "ajax": "AFC Ajax",
     "feyenoord": "Feyenoord",
     "psv": "PSV Eindhoven",
     "benfica": "SL Benfica",
@@ -467,16 +218,13 @@ def normalize_team_name(name: str) -> str:
     return name.strip()
 
 
-# ── OCR PARSER (Fallback) ───────────────────────────────────────────────────
-
 def parse_ocr_to_matches(ocr_text: str) -> list[dict]:
     """Parse OCR text into match objects without AI."""
     matches = []
     lines = ocr_text.strip().split('\n')
     
-    # Patterns for different formats
     vs_pattern = re.compile(
-        r"([A-Za-z][A-Za-z\s\.]+?)\s+(?:vs?\.?|v|-)\s+([A-Za-z][A-Za-z\s\.]+?)(?:\s+|$)"
+        r"([A-Za-z][A-Za-z\s\.]+?)\s+(?:vs?\.?|v|[-–])\s+([A-Za-z][A-Za-z\s\.]+?)(?:\s+|$)"
     )
     odds_pattern = re.compile(r"(\d+\.\d{1,2})")
     
@@ -491,11 +239,9 @@ def parse_ocr_to_matches(ocr_text: str) -> list[dict]:
             home = normalize_team_name(vs_match.group(1))
             away = normalize_team_name(vs_match.group(2))
             
-            # Try to extract odds
             odds_match = odds_pattern.search(line)
             odds = float(odds_match.group(1)) if odds_match else None
             
-            # Infer market from odds
             market = "1X2"
             user_pick = "Home"
             
@@ -519,57 +265,158 @@ def parse_ocr_to_matches(ocr_text: str) -> list[dict]:
     return matches
 
 
-# ── PROMPT 3: AI BEST PLAY PREDICTION ──────────────────────────────────────
+# ── AI PROMPT FOR 3 SLIPS ──────────────────────────────────────────────────
 
-AI_PREDICTION_PROMPT = """
-You are an expert football betting analyst. Analyze the following search data for a match and suggest the 3 best "plays" (Market + Pick) for this game.
+THREE_SLIPS_PROMPT = """
+You are an expert football betting analyst. The user has sent a betting slip with these matches:
 
-## FIXTURE: {home} vs {away}
-## SEARCH DATA:
-{context}
+{matches_text}
+
+## SEARCH DATA FOR EACH MATCH:
+{search_data}
 
 ## YOUR TASK:
-Suggest exactly 3 professional plays for this match based on the provided search data (or your elite internal knowledge if search timed out). Use these target odds tiers:
-1. SAFE - Technical accumulation. (Double Chance, Over 1.5, DNB, Clean Sheet). Target odds: 2.80 - 3.50.
-2. MODERATE - Market value play. (1X2 results, BTTS, Multi-Goals, Win Either Half). Target odds: 4.50 - 6.00.
-3. HIGH - Elite-edge aggressive play. (Handicap spreads, Correct Score, Winning Margin, Draw). Target odds: 9.00 - 12.00.
+Based on the search data above, analyze each match and create EXACTLY 3 slip tiers using ONLY these matches:
 
-## STRATEGY RULES:
-- Avoid basic 'Home Win' or 'Draw' if better value exists in creative markets.
-- Think like a pro punter with 10 years experience: look for hidden patterns (e.g. away team scoring first, tight low-scoring games).
-- Use SportyBet's diverse markets: Handicap, Corner lines, Multi-Goals, Goal Intervals.
+1. **🔒 SAFE SLIP** — Low risk, high probability picks from these matches
+   - Use Double Chance, Over 1.5 Goals, Draw No Bet markets
+   - Target odds per pick: 1.10 - 1.80
+   - Pick the safest option from each match
 
-For each play, you MUST estimate "Fair Odds" based on the probability you see in the data.
+2. **⚖️ MODERATE SLIP** — Balanced risk/reward from these matches
+   - Use 1X2, BTTS, Over 2.5 Goals markets
+   - Target odds per pick: 1.50 - 2.50
+   - Pick the best value option from each match
+
+3. **🚀 HIGH SLIP** — High risk, high reward from these matches
+   - Use 1X2 straight, Correct Score, Handicap markets
+   - Target odds per pick: 2.00 - 5.00
+   - Pick the most aggressive option from each match
+
+For each match, suggest ONE pick per tier. All picks must come from the user's matches only.
 
 ## OUTPUT FORMAT (JSON ONLY):
 {{
-  "safe": {{"market": "Match Result", "pick": "Home Win", "odds": 1.45, "confidence": 88, "reason": "..."}},
-  "moderate": {{"market": "Goals", "pick": "Over 2.5", "odds": 1.85, "confidence": 72, "reason": "..."}},
-  "high": {{"market": "Handicap", "pick": "Away -1", "odds": 3.40, "confidence": 45, "reason": "..."}}
+  "safe": {{
+    "picks": [
+      {{"match": "Team A vs Team B", "market": "Double Chance", "pick": "1X", "odds": 1.30, "confidence": 85, "reason": "Team A unbeaten at home"}}
+    ],
+    "total_odds": 1.69,
+    "description": "Safe accumulator"
+  }},
+  "moderate": {{
+    "picks": [...],
+    "total_odds": 4.50,
+    "description": "Moderate accumulator"
+  }},
+  "high": {{
+    "picks": [...],
+    "total_odds": 12.00,
+    "description": "High risk accumulator"
+  }}
 }}
 """
 
-def ai_predict_best_plays(home: str, away: str, context: str) -> dict:
-    """Ask AI to suggest the best plays for a match based on search data."""
-    if not context or "failed" in context.lower():
-        return {}
+
+def build_slip_analysis_prompt(matches: list, context_map: dict) -> str:
+    """Build prompt for AI to create 3 slip tiers."""
+    matches_text = ""
+    for m in matches:
+        mid = m.get("match_id", 0)
+        home = m.get("home_team", "Unknown")
+        away = m.get("away_team", "Unknown")
+        market = m.get("market", "1X2")
+        odds = m.get("odds", "N/A")
+        matches_text += f"{mid}. {home} vs {away} — {market} @ {odds}\n"
     
-    prompt = AI_PREDICTION_PROMPT.format(home=home, away=away, context=context[:2000])
-    ai_result = call_nvidia_ai(prompt, max_tokens=800)
+    search_data = ""
+    for m in matches:
+        mid = m.get("match_id", 0)
+        home = m.get("home_team", "Unknown")
+        away = m.get("away_team", "Unknown")
+        ctx = context_map.get(mid, "No search data available")
+        search_data += f"\n### {home} vs {away}:\n{ctx[:500]}\n"
     
-    if ai_result:
-        try:
-            # Clean up potential markdown
-            raw = ai_result.strip()
-            if raw.startswith("```"):
-                raw = raw.strip("`").strip()
-                if raw.startswith("json"):
-                    raw = raw[4:].strip()
-            return json.loads(raw)
-        except Exception as e:
-            logger.warning(f"Failed to parse AI predictions for {home} vs {away}: {e}")
+    return THREE_SLIPS_PROMPT.format(matches_text=matches_text, search_data=search_data)
+
+
+def format_three_slips_response(ai_response: str) -> str:
+    """Format AI response into Telegram-friendly 3 slips."""
+    try:
+        raw = ai_response.strip()
+        if raw.startswith("```"):
+            raw = raw.strip("`").strip()
+            if raw.startswith("json"):
+                raw = raw[4:].strip()
+        data = json.loads(raw)
+    except Exception:
+        return None
     
-    return {}
+    lines = ["🧾 *SLIP ANALYSIS*\n"]
+    
+    # Safe slip
+    safe = data.get("safe", {})
+    safe_picks = safe.get("picks", [])
+    safe_total = safe.get("total_odds", 0)
+    if safe_picks:
+        lines.append("🔒 *SAFE SLIP* (Low Risk)")
+        for p in safe_picks:
+            lines.append(f"• {p.get('match', '')}: {p.get('market', '')} → {p.get('pick', '')} @ {p.get('odds', 0):.2f}")
+        lines.append(f"Total Odds: {safe_total:.2f}\n")
+    
+    # Moderate slip
+    mod = data.get("moderate", {})
+    mod_picks = mod.get("picks", [])
+    mod_total = mod.get("total_odds", 0)
+    if mod_picks:
+        lines.append("⚖️ *MODERATE SLIP* (Medium Risk)")
+        for p in mod_picks:
+            lines.append(f"• {p.get('match', '')}: {p.get('market', '')} → {p.get('pick', '')} @ {p.get('odds', 0):.2f}")
+        lines.append(f"Total Odds: {mod_total:.2f}\n")
+    
+    # High slip
+    high = data.get("high", {})
+    high_picks = high.get("picks", [])
+    high_total = high.get("total_odds", 0)
+    if high_picks:
+        lines.append("🚀 *HIGH SLIP* (High Risk)")
+        for p in high_picks:
+            lines.append(f"• {p.get('match', '')}: {p.get('market', '')} → {p.get('pick', '')} @ {p.get('odds', 0):.2f}")
+        lines.append(f"Total Odds: {high_total:.2f}\n")
+    
+    lines.append("⚡ *Want unlimited analysis?* Upgrade to VIP 👉 @Sporty_vip_bot")
+    
+    return "\n".join(lines)
+
+
+def build_fallback_slips(matches: list, context_map: dict) -> str:
+    """Build fallback 3 slips when AI is unavailable."""
+    lines = ["🧾 *SLIP ANALYSIS*\n"]
+    
+    lines.append("🔒 *SAFE SLIP* (Low Risk)")
+    for m in matches:
+        home = m.get("home_team", "Unknown")
+        away = m.get("away_team", "Unknown")
+        lines.append(f"• {home} vs {away}: Double Chance 1X @ 1.30")
+    lines.append("")
+    
+    lines.append("⚖️ *MODERATE SLIP* (Medium Risk)")
+    for m in matches:
+        home = m.get("home_team", "Unknown")
+        away = m.get("away_team", "Unknown")
+        lines.append(f"• {home} vs {away}: Over 2.5 Goals @ 1.80")
+    lines.append("")
+    
+    lines.append("🚀 *HIGH SLIP* (High Risk)")
+    for m in matches:
+        home = m.get("home_team", "Unknown")
+        away = m.get("away_team", "Unknown")
+        lines.append(f"• {home} vs {away}: 1X2 Home Win @ 2.20")
+    lines.append("")
+    
+    lines.append("⚡ *Want AI-powered analysis?* Upgrade to VIP 👉 @Sporty_vip_bot")
+    
+    return "\n".join(lines)
 
 
 # ── MAIN ORCHESTRATOR ────────────────────────────────────────────────────────
@@ -577,122 +424,55 @@ def ai_predict_best_plays(home: str, away: str, context: str) -> dict:
 def analyze_slip_with_search(ocr_text: str, glm_client=None) -> str:
     """
     Full pipeline:
-    1. Extract matches from OCR text (with AI if available, else regex)
-    2. Search each fixture on DuckDuckGo
-    3. Analyze with context using AI (NVIDIA or GLM)
-    4. Return final message
+    1. Extract matches from text (regex only, no AI)
+    2. Search each fixture via DuckDuckGo (parallel)
+    3. Use AI to create 3 slip tiers
+    4. Return formatted response
     """
-    # Step 1: Extract matches
-    matches = None
+    # Step 1: Extract matches with regex (no AI)
+    matches = parse_ocr_to_matches(ocr_text)
 
-    # Try AI extraction with NVIDIA first
-    if not glm_client:
-        extraction_prompt = EXTRACTION_PROMPT.replace("{ocr_text}", ocr_text)
-        ai_result = call_nvidia_ai(extraction_prompt, max_tokens=500)
-        if ai_result:
-            try:
-                # Clean up potential markdown
-                raw = ai_result.strip()
-                if raw.startswith("```"):
-                    raw = raw.strip("`").strip()
-                    if raw.startswith("json"):
-                        raw = raw[4:].strip()
-                matches = json.loads(raw)
-            except json.JSONDecodeError:
-                logger.warning("NVIDIA extraction returned non-JSON, using regex")
-    
-    if glm_client:
-        try:
-            extraction_response = glm_client.chat.completions.create(
-                model="glm-4v",
-                messages=[{
-                    "role": "user",
-                    "content": EXTRACTION_PROMPT.replace("{ocr_text}", ocr_text)
-                }]
-            )
-            raw = extraction_response.choices[0].message.content.strip()
-
-            # Clean up potential markdown
-            if raw.startswith("```"):
-                raw = raw.strip("`").strip()
-            if raw.startswith("json"):
-                raw = raw[4:].strip()
-
-            matches = json.loads(raw)
-        except Exception as e:
-            logger.warning(f"AI extraction failed: {e}")
-
-    # Fallback to regex parsing
-    if not matches:
-        matches = parse_ocr_to_matches(ocr_text)
-
-    # Handle unclear image
     if isinstance(matches, dict) and matches.get("error") == "unclear_image":
-        return "❌ I couldn't detect enough matches. Please send a clearer screenshot."
+        return "❌ I couldn't detect enough matches. Please send a clearer slip."
 
     if not matches or len(matches) < 2:
-        return "❌ I could only find one match. Please send the full slip screenshot."
+        return "❌ I could only find one match. Please send the full slip."
 
-    # Step 2: Search each fixture
+    # Step 2: Search each fixture (parallel)
     context_map = build_search_context(matches)
 
-    # Step 3: Build analysis prompt with context
-    analysis_prompt = build_analysis_prompt(matches, context_map)
+    # Step 3: Build prompt and call AI
+    prompt = build_slip_analysis_prompt(matches, context_map)
+    ai_response = call_nvidia_ai(prompt, max_tokens=2000)
 
-    # Step 4: Get AI analysis with full context
-    # Try NVIDIA AI first
-    ai_result = call_nvidia_ai(analysis_prompt, max_tokens=1500)
-    if ai_result:
-        return ai_result
-
-    # Try GLM if available
-    if glm_client:
-        try:
-            analysis_response = glm_client.chat.completions.create(
-                model="glm-4v",
-                messages=[{
-                    "role": "user",
-                    "content": analysis_prompt
-                }]
-            )
-            return analysis_response.choices[0].message.content
-        except Exception as e:
-            logger.error(f"GLM analysis failed: {e}")
-
-    # Fallback: return search-based analysis without AI
-    return build_fallback_response(matches, context_map)
-
-
-def build_fallback_response(matches: list, context_map: dict) -> str:
-    """Build response when AI is unavailable."""
-    lines = ["🧾 *SLIP ANALYSIS*\n"]
+    # Step 4: Format response
+    if ai_response:
+        formatted = format_three_slips_response(ai_response)
+        if formatted:
+            return formatted
     
-    for m in matches:
+    # Fallback
+    return build_fallback_slips(matches, context_map)
+
+
+def build_search_context(matches: list) -> dict:
+    """Build search context for all matches in parallel."""
+    context_map = {}
+    
+    def search_one(m):
         mid = m.get("match_id", 0)
-        home = m.get("home_team", "Unknown")
-        away = m.get("away_team", "Unknown")
-        market = m.get("market", "Unknown")
-        odds = m.get("odds", "N/A")
-        user_pick = m.get("user_pick", "Unknown")
-        context = context_map.get(mid, "No data")
-        
-        lines.append(f"{mid}. *{home} vs {away}* — {market} @ {odds}")
-        
-        # Simple heuristic based on search context
-        context_lower = context.lower()
-        if "win" in context_lower or "favorite" in context_lower:
-            verdict = "KEEP ✅"
-        elif "risk" in context_lower or "uncertain" in context_lower:
-            verdict = "RISKY ⚠️"
-        else:
-            verdict = "RISKY ⚠️"
-        
-        lines.append(f"Verdict: {verdict}")
-        lines.append(f"Reason: Based on search context (AI unavailable)")
-        lines.append("---\n")
+        home = m.get("home_team", "")
+        away = m.get("away_team", "")
+        ctx = search_match_context(home, away)
+        return mid, ctx
     
-    lines.append("📊 *Overall: Verify picks manually*")
-    lines.append("")
-    lines.append("⚡ *Upgrade to VIP for AI-powered analysis 👉 /vip*")
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        futures = {executor.submit(search_one, m): m for m in matches}
+        for future in as_completed(futures):
+            try:
+                mid, ctx = future.result()
+                context_map[mid] = ctx
+            except Exception as e:
+                logger.warning(f"Search failed: {e}")
     
-    return "\n".join(lines)
+    return context_map

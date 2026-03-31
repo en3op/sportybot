@@ -103,19 +103,32 @@ def init_pool_db():
             FOREIGN KEY (prediction_id) REFERENCES predictions(id)
         );
 
-        CREATE TABLE IF NOT EXISTS accuracy_stats (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            period TEXT NOT NULL,
-            market TEXT,
-            risk_tier TEXT,
-            total INTEGER DEFAULT 0,
-            wins INTEGER DEFAULT 0,
-            accuracy REAL DEFAULT 0,
-            avg_confidence REAL DEFAULT 0,
-            updated_at TEXT DEFAULT (datetime('now'))
-        );
+CREATE TABLE IF NOT EXISTS accuracy_stats (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        period TEXT NOT NULL,
+        market TEXT,
+        risk_tier TEXT,
+        total INTEGER DEFAULT 0,
+        wins INTEGER DEFAULT 0,
+        accuracy REAL DEFAULT 0,
+        avg_confidence REAL DEFAULT 0,
+        updated_at TEXT DEFAULT (datetime('now'))
+    );
 
-        CREATE INDEX IF NOT EXISTS idx_matches_date ON matches(match_date);
+    CREATE TABLE IF NOT EXISTS vip_slips (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        slip_date TEXT NOT NULL,
+        slip_type TEXT NOT NULL,
+        picks TEXT,
+        combined_odds REAL DEFAULT 0,
+        risk_level TEXT,
+        summary TEXT,
+        approved_at TEXT,
+        sent_at TEXT,
+        UNIQUE(slip_date, slip_type)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_matches_date ON matches(match_date);
         CREATE INDEX IF NOT EXISTS idx_matches_status ON matches(status);
         CREATE INDEX IF NOT EXISTS idx_matches_teams ON matches(home_team, away_team);
         CREATE INDEX IF NOT EXISTS idx_predictions_match ON predictions(match_id);

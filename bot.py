@@ -247,6 +247,67 @@ def list_all_vips() -> list[dict]:
 
 
 # =============================================================================
+# OCR FUNCTIONS
+# =============================================================================
+
+def extract_text_from_image(image_path: str) -> str:
+    """Extract text from image using Tesseract OCR."""
+    tesseract_path = TESSERACT_CMD
+    if tesseract_path and os.path.exists(tesseract_path):
+        pytesseract.pytesseract.tesseract_cmd = tesseract_path
+    elif os.path.exists(r"C:\Program Files\Tesseract-OCR\tesseract.exe"):
+        pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+    try:
+        img = Image.open(image_path)
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        text = pytesseract.image_to_string(img, config='--psm 4')
+        return text.strip()
+    except Exception as e:
+        logger.error(f"OCR failed: {e}")
+        return ""
+
+
+def parse_slip_text(text: str) -> list[dict]:
+    """Parse extracted OCR text into structured picks."""
+    picks = []
+    lines = text.strip().split('\n')
+    
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        
+        # Try to extract team vs team pattern
+        vs_match = re.search(r'([A-Za-z][A-Za-z\s\.]+?)\s+(?:vs?\.?|v|-)\s+([A-Za-z][A-Za-z\s\.]+)', line, re.IGNORECASE)
+        if vs_match:
+            team1 = vs_match.group(1).strip()
+            team2 = vs_match.group(2).strip()
+            
+            # Try to extract odds
+            odds_match = re.search(r'(\d+\.\d{1,2})', line)
+            odds = float(odds_match.group(1)) if odds_match else 1.85
+            
+            # Infer bet type from odds
+            if odds < 1.5:
+                bet_type = "Home Win"
+            elif odds > 3.0:
+                bet_type = "Away Win"
+            else:
+                bet_type = "Draw/Home"
+            
+            picks.append({
+                "team1": team1,
+                "team2": team2,
+                "bet_type": bet_type,
+                "odds": odds,
+            })
+    
+    return picks
+
+
+# =============================================================================
 # API-FOOTBALL INTEGRATION
 # =============================================================================
 

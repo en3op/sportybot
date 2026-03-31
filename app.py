@@ -212,6 +212,30 @@ def dashboard():
     except Exception:
         pass
 
+    # Free bot user stats
+    free_stats = {}
+    try:
+        import sqlite3 as sqlite3_mod
+        users_conn = sqlite3_mod.connect("users.db")
+        users_conn.row_factory = sqlite3_mod.Row
+        free_row = users_conn.execute("""
+            SELECT 
+                COUNT(*) as total_users,
+                SUM(total_interactions) as total_interactions,
+                SUM(total_slips_analyzed) as total_slips_analyzed,
+                COUNT(CASE WHEN last_seen >= datetime('now', '-1 day') THEN 1 END) as daily_active
+            FROM free_users
+        """).fetchone()
+        free_stats = {
+            "total_users": free_row["total_users"] or 0,
+            "total_interactions": free_row["total_interactions"] or 0,
+            "total_slips_analyzed": free_row["total_slips_analyzed"] or 0,
+            "daily_active": free_row["daily_active"] or 0,
+        }
+        users_conn.close()
+    except Exception:
+        pass
+
     return render_template(
         "index.html",
         total_vips=total_vips,
@@ -226,6 +250,7 @@ def dashboard():
         recent_runs=recent_runs,
         accuracy_by_tier=accuracy_by_tier,
         upcoming_by_date=upcoming_by_date,
+        free_stats=free_stats,
     )
 
 
@@ -1338,6 +1363,395 @@ def n8n_status():
     except Exception as e:
         logger.error(f"n8n status error: {e}")
         return jsonify({"status": "error", "error": str(e)}), 500
+
+
+# =============================================================================
+# FREE BOT USER TRACKING
+# =============================================================================
+
+@app.route("/free-users")
+def free_users():
+    """Free bot users management page."""
+    import sqlite3
+    conn = sqlite3.connect("users.db")
+    conn.row_factory = sqlite3.Row
+    search = request.args.get("search", "")
+    sort = request.args.get("sort", "last_seen")
+    
+    vip_conn = sqlite3.connect("vip_users.db")
+    vip_conn.row_factory = sqlite3.Row
+    
+    if search:
+        users = conn.execute("""
+            SELECT * FROM free_users
+            WHERE username LIKE ? OR first_name LIKE ? OR CAST(user_id AS TEXT) LIKE ?
+            ORDER BY last_seen DESC
+        """, (f"%{search}%", f"%{search}%", f"%{search}%")).fetchall()
+    else:
+        users = conn.execute(f"""
+            SELECT * FROM free_users
+            ORDER BY {sort} DESC
+        """).fetchall()
+    
+    vip_map = {}
+    for v in vip_conn.execute("SELECT user_id, username, added_date, expiry_date FROM vip_users").fetchall():
+        vip_map[v["user_id"]] = dict(v)
+    vip_conn.close()
+    
+    user_list = []
+    for u in users:
+        vip_info = vip_map.get(u["user_id"])
+        is_vip = vip_info is not None
+        vip_active = False
+        if is_vip and vip_info["expiry_date"]:
+            try:
+                vip_active = datetime.strptime(vip_info["expiry_date"], "%Y-%m-%d %H:%M:%S") > datetime.now()
+            except:
+                pass
+        user_list.append({
+            "user_id": u["user_id"],
+            "username": u["username"],
+            "first_name": u["first_name"],
+            "last_name": u["last_name"],
+            "first_seen": u["first_seen"],
+            "last_seen": u["last_seen"],
+            "total_interactions": u["total_interactions"],
+            "total_slips_analyzed": u["total_slips_analyzed"],
+            "is_vip": is_vip,
+            "vip_active": vip_active,
+            "vip_expiry": vip_info["expiry_date"] if vip_info else None,
+        })
+    
+    conn.close()
+    
+    total_users = len(user_list)
+    vip_count = sum(1 for u in user_list if u["is_vip"])
+    active_vip_count = sum(1 for u in user_list if u["vip_active"])
+    total_slips = sum(u["total_slips_analyzed"] for u in user_list)
+    
+    return render_template("free_users.html", users=user_list, search=search, sort=sort,
+                          total_users=total_users, vip_count=vip_count,
+                          active_vip_count=active_vip_count, total_slips=total_slips)
+
+
+@app.route("/api/free-users/<int:user_id>")
+def get_free_user(user_id):
+    """Get detailed info for a free bot user."""
+    import sqlite3
+    import os
+    db_dir = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(os.path.join(db_dir, "users.db"))
+    conn.row_factory = sqlite3.Row
+    
+    user = conn.execute("SELECT * FROM free_users WHERE user_id = ?", (user_id,)).fetchone()
+    if not user:
+        conn.close()
+        return jsonify({"error": "User not found"}), 404
+    
+    interactions = conn.execute(
+        "SELECT * FROM interaction_log WHERE user_id = ? ORDER BY created_at DESC LIMIT 50",
+        (user_id,)
+    ).fetchall()
+    
+    vip_conn = sqlite3.connect(os.path.join(db_dir, "vip_users.db"))
+    vip_conn.row_factory = sqlite3.Row
+    vip_info = vip_conn.execute(
+        "SELECT * FROM vip_users WHERE user_id = ?", (user_id,)
+    ).fetchone()
+    vip_info_dict = dict(vip_info) if vip_info else None
+    vip_conn.close()
+    
+    result = {
+        "user_id": user["user_id"],
+        "username": user["username"],
+        "first_name": user["first_name"],
+        "last_name": user["last_name"],
+        "first_seen": user["first_seen"],
+        "last_seen": user["last_seen"],
+        "total_interactions": user["total_interactions"],
+        "total_slips_analyzed": user["total_slips_analyzed"],
+        "is_vip": vip_info is not None,
+        "vip_info": vip_info_dict,
+        "recent_interactions": [dict(i) for i in interactions],
+    }
+    
+    conn.close()
+    return jsonify(result)
+
+
+@app.route("/api/free-users/stats")
+def free_users_stats():
+    """Get aggregate stats for free bot users."""
+    import sqlite3
+    conn = sqlite3.connect("users.db")
+    conn.row_factory = sqlite3.Row
+    
+    stats = conn.execute("""
+        SELECT 
+            COUNT(*) as total_users,
+            SUM(total_interactions) as total_interactions,
+            SUM(total_slips_analyzed) as total_slips_analyzed,
+            COUNT(CASE WHEN total_slips_analyzed > 0 THEN 1 END) as active_analyzers,
+            COUNT(CASE WHEN last_seen >= datetime('now', '-7 days') THEN 1 END) as weekly_active,
+            COUNT(CASE WHEN last_seen >= datetime('now', '-1 day') THEN 1 END) as daily_active
+        FROM free_users
+    """).fetchone()
+    
+    conn.close()
+    
+    return jsonify({
+        "total_users": stats["total_users"],
+        "total_interactions": stats["total_interactions"] or 0,
+        "total_slips_analyzed": stats["total_slips_analyzed"] or 0,
+        "active_analyzers": stats["active_analyzers"] or 0,
+        "weekly_active": stats["weekly_active"] or 0,
+        "daily_active": stats["daily_active"] or 0,
+    })
+
+
+@app.route("/api/free-users/<int:user_id>/upgrade", methods=["POST"])
+def mark_user_upgrade(user_id):
+    """Mark a free user as upgraded to VIP."""
+    import sqlite3
+    conn = sqlite3.connect("users.db")
+    conn.execute("INSERT INTO vip_upgrades (user_id, username, source) VALUES (?, ?, ?)",
+                 (user_id, request.form.get("username", ""), request.form.get("source", "manual")))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
+
+
+# =============================================================================
+# VIP SLIPS MANAGEMENT
+# =============================================================================
+
+@app.route("/vip-slips")
+def vip_slips():
+    """VIP slips management page with shuffle and approve functionality."""
+    from core.pool_manager import _get_db
+    from core.vip_slip_engine import generate_vip_slips
+    
+    conn = _get_db()
+    today = datetime.now().strftime("%Y-%m-%d")
+    
+    matches = conn.execute("""
+        SELECT m.match_id, m.home_team, m.away_team, m.league, m.match_date, m.status,
+               p.market, p.pick, p.odds, p.confidence, p.risk_tier, p.reasoning, p.approved
+        FROM matches m
+        LEFT JOIN predictions p ON m.match_id = p.match_id
+        WHERE m.status = 'scheduled'
+        AND m.match_date >= ?
+        AND p.approved = 1
+        ORDER BY m.match_date, m.league
+    """, (today,)).fetchall()
+    
+    conn.close()
+    
+    grouped = {}
+    for row in matches:
+        mid = row["match_id"]
+        if mid not in grouped:
+            grouped[mid] = {
+                "match_id": mid,
+                "home_team": row["home_team"],
+                "away_team": row["away_team"],
+                "league": row["league"],
+                "match_date": row["match_date"],
+                "status": row["status"],
+                "predictions": []
+            }
+        if row["market"]:
+            grouped[mid]["predictions"].append({
+                "market": row["market"],
+                "pick": row["pick"],
+                "odds": row["odds"],
+                "confidence": row["confidence"],
+                "risk_tier": row["risk_tier"],
+                "reasoning": row["reasoning"],
+            })
+    
+    match_list = list(grouped.values())
+    
+    slips = generate_vip_slips(match_list, use_ai=True)
+    
+    return render_template("vip_slips.html", slips=slips, matches=match_list)
+
+
+@app.route("/vip-slips/shuffle/<slip_type>", methods=["POST"])
+def shuffle_slip(slip_type):
+    """Shuffle a single slip with AI-powered intelligent selection."""
+    from core.pool_manager import _get_db
+    from core.vip_slip_engine import shuffle_single_slip, generate_vip_slips
+    import json
+    
+    if slip_type not in ["slip_a", "slip_b", "slip_c"]:
+        flash("Invalid slip type", "danger")
+        return redirect(url_for("vip_slips"))
+    
+    current_slips = request.form.get("current_slips", "{}")
+    try:
+        current_slips = json.loads(current_slips)
+    except:
+        current_slips = {}
+    
+    conn = _get_db()
+    today = datetime.now().strftime("%Y-%m-%d")
+    
+    matches = conn.execute("""
+        SELECT m.match_id, m.home_team, m.away_team, m.league, m.match_date,
+               p.market, p.pick, p.odds, p.confidence, p.risk_tier, p.reasoning
+        FROM matches m
+        LEFT JOIN predictions p ON m.match_id = p.match_id
+        WHERE m.status = 'scheduled'
+        AND m.match_date >= ?
+        AND p.approved = 1
+    """, (today,)).fetchall()
+    conn.close()
+    
+    grouped = {}
+    for row in matches:
+        mid = row["match_id"]
+        if mid not in grouped:
+            grouped[mid] = {
+                "match_id": mid,
+                "home_team": row["home_team"],
+                "away_team": row["away_team"],
+                "league": row["league"],
+                "match_date": row["match_date"],
+                "predictions": []
+            }
+        if row["market"]:
+            grouped[mid]["predictions"].append({
+                "market": row["market"],
+                "pick": row["pick"],
+                "odds": row["odds"],
+                "confidence": row["confidence"],
+                "risk_tier": row["risk_tier"],
+                "reasoning": row["reasoning"],
+            })
+    
+    match_list = list(grouped.values())
+    
+    if not current_slips:
+        current_slips = generate_vip_slips(match_list, use_ai=True)
+    
+    new_slips = shuffle_single_slip(slip_type, current_slips, match_list)
+    
+    flash(f"{slip_type.replace('_', ' ').title()} shuffled successfully!", "success")
+    
+    return render_template("vip_slips.html", slips=new_slips, matches=match_list)
+
+
+@app.route("/vip-slips/approve", methods=["POST"])
+def approve_vip_slips():
+    """Approve the current slips and store them as today's VIP picks."""
+    from core.pool_manager import _get_db
+    import json
+    
+    slips_data = request.form.get("slips_data", "{}")
+    try:
+        slips = json.loads(slips_data)
+    except:
+        flash("Invalid slips data", "danger")
+        return redirect(url_for("vip_slips"))
+    
+    conn = _get_db()
+    today = datetime.now().strftime("%Y-%m-%d")
+    
+    conn.execute("DELETE FROM vip_slips WHERE slip_date = ?", (today,))
+    
+    for slip_key in ["slip_a", "slip_b", "slip_c"]:
+        if slip_key in slips:
+            slip_data = slips[slip_key]
+            picks_json = json.dumps(slip_data.get("picks", []))
+            
+            conn.execute("""
+                INSERT INTO vip_slips (slip_date, slip_type, picks, combined_odds, risk_level, summary, approved_at)
+                VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+            """, (
+                today,
+                slip_key,
+                picks_json,
+                slip_data.get("combined_odds", 0),
+                slip_data.get("risk_level", "MODERATE"),
+                slip_data.get("summary", "")
+            ))
+    
+    conn.commit()
+    conn.close()
+    
+    flash("VIP slips approved for today!", "success")
+    return redirect(url_for("vip_slips"))
+
+
+@app.route("/vip-slips/send", methods=["POST"])
+def send_vip_slips():
+    """Send approved VIP slips to all active VIP users via Telegram."""
+    import telebot
+    from core.pool_manager import _get_db
+    import json
+    
+    BOT_TOKEN = os.environ.get("VIP_BOT_TOKEN", "8185085447:AAHFnZ5TmJhZqfVkF8sxvB5Np8Ry4aLhNzE")
+    
+    conn = _get_db()
+    today = datetime.now().strftime("%Y-%m-%d")
+    
+    stored_slips = conn.execute("""
+        SELECT slip_type, picks, combined_odds, risk_level, summary
+        FROM vip_slips
+        WHERE slip_date = ?
+        ORDER BY slip_type
+    """, (today,)).fetchall()
+    
+    if not stored_slips:
+        flash("No approved slips found for today", "warning")
+        return redirect(url_for("vip_slips"))
+    
+    labels = {"slip_a": "SLIP A (SAFE)", "slip_b": "SLIP B (MODERATE)", "slip_c": "SLIP C (HIGH)"}
+    
+    msg_parts = ["⚽ *TODAY'S VIP PICKS*\n"]
+    
+    for row in stored_slips:
+        slip_type = row["slip_type"]
+        picks = json.loads(row["picks"]) if row["picks"] else []
+        combined = row["combined_odds"]
+        risk = row["risk_level"]
+        
+        label = labels.get(slip_type, slip_type)
+        msg_parts.append(f"\n🎯 *{label}* ({combined:.2f}x)")
+        msg_parts.append(f"Risk: {risk}")
+        msg_parts.append("─" * 20)
+        
+        for i, p in enumerate(picks, 1):
+            msg_parts.append(f"{i}. {p['home']} vs {p['away']}")
+            msg_parts.append(f"   {p['market']}: {p['pick']} @ {p['odds']:.2f}")
+            if p.get('reasoning'):
+                msg_parts.append(f"   💡 {p['reasoning'][:50]}...")
+            msg_parts.append("")
+    
+    message = "\n".join(msg_parts)
+    
+    vips = conn.execute(
+        "SELECT telegram_id FROM vip_users WHERE is_active = 1"
+    ).fetchall()
+    conn.close()
+    
+    if not vips:
+        flash("No active VIP users to send to", "warning")
+        return redirect(url_for("vip_slips"))
+    
+    bot = telebot.TeleBot(BOT_TOKEN)
+    sent_count = 0
+    
+    for vip in vips:
+        try:
+            bot.send_message(vip["telegram_id"], message[:4000], parse_mode="Markdown")
+            sent_count += 1
+        except Exception as e:
+            logger.error(f"Failed to send to {vip['telegram_id']}: {e}")
+    
+    flash(f"Sent {len(stored_slips)} slips to {sent_count} VIP users", "success")
+    return redirect(url_for("vip_slips"))
 
 
 # =============================================================================

@@ -70,6 +70,72 @@ def init_databases():
     pool_conn.close()
     logger.info("prediction_pool.db initialized")
 
+    users_conn = sqlite3.connect("users.db")
+    users_conn.executescript("""
+        CREATE TABLE IF NOT EXISTS free_users (
+            user_id INTEGER PRIMARY KEY,
+            username TEXT,
+            first_name TEXT,
+            last_name TEXT,
+            first_seen TEXT DEFAULT (datetime('now')),
+            last_seen TEXT DEFAULT (datetime('now')),
+            total_interactions INTEGER DEFAULT 0,
+            total_slips_analyzed INTEGER DEFAULT 0
+        );
+        CREATE TABLE IF NOT EXISTS vip_upgrades (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            username TEXT,
+            upgraded_at TEXT DEFAULT (datetime('now')),
+            source TEXT DEFAULT 'manual',
+            FOREIGN KEY (user_id) REFERENCES free_users(user_id)
+        );
+        CREATE TABLE IF NOT EXISTS interaction_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            action TEXT NOT NULL,
+            details TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES free_users(user_id)
+        );
+    """)
+    users_conn.commit()
+    users_conn.close()
+    logger.info("users.db initialized")
+
+    users_conn = sqlite3.connect("users.db")
+    users_conn.executescript("""
+        CREATE TABLE IF NOT EXISTS free_users (
+            user_id INTEGER PRIMARY KEY,
+            username TEXT,
+            first_name TEXT,
+            last_name TEXT,
+            first_seen TEXT DEFAULT (datetime('now')),
+            last_seen TEXT DEFAULT (datetime('now')),
+            total_interactions INTEGER DEFAULT 0,
+            total_slips_analyzed INTEGER DEFAULT 0
+        );
+        CREATE TABLE IF NOT EXISTS vip_upgrades (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            username TEXT,
+            upgraded_at TEXT DEFAULT (datetime('now')),
+            source TEXT DEFAULT 'manual',
+            FOREIGN KEY (user_id) REFERENCES free_users(user_id)
+        );
+        CREATE TABLE IF NOT EXISTS interaction_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            action TEXT NOT NULL,
+            details TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES free_users(user_id)
+        );
+    """)
+    users_conn.commit()
+    users_conn.close()
+    logger.info("users.db initialized")
+
 FREE_BOT_TOKEN = os.environ.get("FREE_BOT_TOKEN", "8784721708:AAFBp7_YbzpzeNvg-Y7lam_i8w6FhnJByHw")
 WEBHOOK_URL = "https://sportybot-v2.onrender.com/telegram-webhook"
 
@@ -102,7 +168,10 @@ async def init_bot_async():
     """Initialize the bot application asynchronously."""
     await free_bot_app.initialize()
     await free_bot_app.start()
-    await set_webhook()
+    try:
+        await set_webhook()
+    except Exception as e:
+        logger.warning(f"Failed to set webhook (non-critical): {e}")
 
 def init_bot():
     """Initialize the bot synchronously."""
