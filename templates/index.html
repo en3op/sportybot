@@ -202,7 +202,10 @@
                 <div class="progress mt-2" style="height:6px;background:rgba(255,255,255,0.05);">
                     <div class="progress-bar bg-success" style="width:{{ grading_stats.get('win_rate', 0) }}%"></div>
                 </div>
-                <div class="text-muted small mt-1">{{ grading_stats.get('total_graded', 0) }} total graded</div>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <div class="text-muted small">{{ grading_stats.get('total_graded', 0) }} total graded</div>
+                    <a href="{{ url_for('results') }}" class="btn btn-sm btn-link p-0 text-info" style="font-size:0.75rem;">View Results <i class="fas fa-chevron-right ms-1"></i></a>
+                </div>
                 {% endif %}
             </div>
         </div>

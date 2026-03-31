@@ -239,6 +239,11 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'results' %}active{% endif %}" href="{{ url_for('results') }}">
+                        <i class="fas fa-check-circle"></i> Recent Results
+                    </a>
+                </li>
+                <li class="nav-item">
                 <a class="nav-link {% if request.endpoint in ['picks_dashboard', 'run_pipeline', 'approve_picks', 'reject_picks'] %}active{% endif %}" href="{{ url_for('picks_dashboard') }}">
                     <i class="fas fa-robot"></i> Pipeline Picks
                     {% if has_pending is defined and has_pending %}

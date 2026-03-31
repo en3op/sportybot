@@ -552,15 +552,16 @@ def manage_prediction(match_id):
         if existing:
             conn.execute("""
                 UPDATE predictions SET 
-                    market = ?, pick = ?, odds = ?, confidence = ?, risk_tier = ?, reasoning = ?, approved = ?, updated_at = datetime('now')
+                    market = ?, pick = ?, odds = ?, confidence = ?, risk_tier = ?, 
+                    reasoning = ?, approved = ?, model_version = 'manual', updated_at = datetime('now')
                 WHERE match_id = ?
             """, (data.get("market"), data.get("pick"), data.get("odds"), 
                   data.get("confidence"), data.get("risk_tier"), data.get("reasoning"),
                   data.get("approved", 0), match_id))
         else:
             conn.execute("""
-                INSERT INTO predictions (match_id, market, pick, odds, confidence, risk_tier, reasoning, source, approved)
-                VALUES (?, ?, ?, ?, ?, ?, ?, 'manual', ?)
+                INSERT INTO predictions (match_id, market, pick, odds, confidence, risk_tier, reasoning, source, approved, model_version)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'manual', ?, 'manual')
             """, (match_id, data.get("market"), data.get("pick"), data.get("odds"),
                   data.get("confidence"), data.get("risk_tier"), data.get("reasoning"),
                   data.get("approved", 0)))
@@ -616,6 +617,9 @@ def _format_date_label(date_str):
         return date_str
 
 
+    return redirect(url_for("schedule"))
+
+
 @app.route("/schedule/fotmob")
 def refresh_from_fotmob():
     """Fetch matches from FotMob and populate prediction pool."""
@@ -630,6 +634,56 @@ def refresh_from_fotmob():
         flash(f"Error fetching from FotMob: {e}", "danger")
     
     return redirect(url_for("schedule"))
+
+
+@app.route("/results")
+def results():
+    """Show graded predictions (win/loss)."""
+    from datetime import datetime, timedelta
+    from core.pool_manager import _get_db
+    
+    conn = _get_db()
+    # Get last 14 days of results
+    cutoff = (datetime.now() - timedelta(days=14)).strftime("%Y-%m-%d")
+    
+    graded = conn.execute("""
+        SELECT m.match_id, m.home_team, m.away_team, m.league, m.match_date,
+               p.market, p.pick, p.odds, p.confidence, p.risk_tier, p.result, p.graded_at
+        FROM matches m
+        JOIN predictions p ON m.match_id = p.match_id
+        WHERE p.result IN ('win', 'loss', 'void')
+          AND m.match_date >= ?
+        ORDER BY m.match_date DESC, m.league
+    """, (cutoff,)).fetchall()
+    
+    conn.close()
+    
+    # Group by date
+    days_dict = {}
+    for m in graded:
+        date = m["match_date"][:10] if m["match_date"] else "Unknown"
+        if date not in days_dict:
+            days_dict[date] = {
+                "date": date,
+                "date_label": _format_date_label(date),
+                "matches": []
+            }
+        days_dict[date]["matches"].append({
+            "match_id": m["match_id"],
+            "home": m["home_team"],
+            "away": m["away_team"],
+            "league": m["league"],
+            "time": m["match_date"][11:16] if len(m["match_date"]) > 10 else "TBD",
+            "market": m["market"],
+            "pick": m["pick"],
+            "odds": m["odds"],
+            "result": m["result"],
+            "tier": m["risk_tier"]
+        })
+    
+    days = [days_dict[d] for d in sorted(days_dict.keys(), reverse=True)]
+    
+    return render_template("results.html", days=days)
 
 
 # =============================================================================

@@ -1,0 +1,68 @@
+{% extends "layout.html" %}
+
+{% block title %}Recent Results{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>📊 Recent Results</h1>
+        <div class="text-muted">Last 14 days of predictions</div>
+    </div>
+
+    {% if not days %}
+    <div class="alert alert-info">
+        No graded results found for the last 14 days. Matches appear here once you add a result.
+    </div>
+    {% endif %}
+
+    {% for day in days %}
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header {% if day.is_today %}bg-primary text-white{% else %}bg-light{% endif %}">
+            <h5 class="mb-0">{{ day.date_label }}</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Time</th>
+                            <th>Fixture</th>
+                            <th>League</th>
+                            <th>Market</th>
+                            <th>Pick</th>
+                            <th>Odds</th>
+                            <th>Tier</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for match in day.matches %}
+                        <tr>
+                            <td>{{ match.time }}</td>
+                            <td>
+                                <strong>{{ match.home }}</strong> vs <strong>{{ match.away }}</strong>
+                            </td>
+                            <td><small class="text-muted">{{ match.league }}</small></td>
+                            <td>{{ match.market }}</td>
+                            <td>{{ match.pick }}</td>
+                            <td>{{ match.odds }}</td>
+                            <td>
+                                <span class="badge {% if match.tier == 'safe' %}bg-success{% elif match.tier == 'medium' %}bg-warning text-dark{% else %}bg-danger{% endif %} text-uppercase">
+                                    {{ match.tier or 'N/A' }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {% if match.result == 'win' %}bg-success{% elif match.result == 'loss' %}bg-danger{% else %}bg-secondary{% endif %} text-uppercase px-3">
+                                    {{ match.result }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

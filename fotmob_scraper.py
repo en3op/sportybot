@@ -483,10 +483,22 @@ def populate_predictions_from_fotmob(max_analyze: int = 50) -> int:
         
         odds = _estimate_odds_from_position(home_pos, away_pos, analysis["advantage"])
         
+        # Check if already exists and is protected
+        existing = cursor.execute(
+            "SELECT approved, model_version FROM predictions WHERE match_id = ?",
+            (match_id,)
+        ).fetchone()
+        
+        if existing and (existing["approved"] == 1 or existing["model_version"] == "manual"):
+            continue
+
+        # Clean existing non-protected prediction
+        cursor.execute("DELETE FROM predictions WHERE match_id = ?", (match_id,))
+        
         # Insert prediction
         cursor.execute("""
-            INSERT INTO predictions (match_id, market, pick, odds, confidence, risk_tier, reasoning)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT OR IGNORE INTO predictions (match_id, market, pick, odds, confidence, risk_tier, reasoning, model_version)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'fotmob')
         """, (
             match_id,
             market,

@@ -296,10 +296,19 @@ def get_predictions_by_tier(risk_tier: str, min_confidence: float = 60) -> list[
     return [dict(r) for r in rows]
 
 
-def clear_predictions_for_match(match_id: str):
-    """Remove all predictions for a match (before re-scoring)."""
+def clear_predictions_for_match(match_id: str, force: bool = False):
+    """
+    Remove predictions for a match.
+    If force=False, skips approved or manual predictions.
+    """
     conn = _get_db()
-    conn.execute("DELETE FROM predictions WHERE match_id = ?", (match_id,))
+    if force:
+        conn.execute("DELETE FROM predictions WHERE match_id = ?", (match_id,))
+    else:
+        conn.execute("""
+            DELETE FROM predictions 
+            WHERE match_id = ? AND approved = 0 AND (model_version != 'manual' OR model_version IS NULL)
+        """, (match_id,))
     conn.commit()
     conn.close()
 
