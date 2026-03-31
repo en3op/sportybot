@@ -1,26 +1,31 @@
 # Use Python 3.11 Slim as base
 FROM python:3.11-slim
 
-# Install system dependencies
-# Using a single line for apt-get to avoid escaping issues
-RUN apt-get update && apt-get install -y tesseract-ocr libtesseract-dev libgl1 libglib2.0-0 && rm -rf /var/lib/apt/lists/*
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PORT=5000
+ENV TESSDATA_PREFIX=/usr/share/tesseract-ocr/5/tessdata/
 
-# Set working directory
+# 1. Install system dependencies (Heavy layer - cached)
+RUN apt-get update && apt-get install -y \
+    tesseract-ocr \
+    libtesseract-dev \
+    libgl1 \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# 2. Set working directory
 WORKDIR /app
 
-# Copy requirements and install dependencies
+# 3. Install Python dependencies (Medium layer - cached)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project files
+# 4. Copy project files (Light layer - changes frequently)
 COPY . .
 
 # Expose the Flask port
 EXPOSE 5000
-
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV PORT=5000
 
 # Start the application orchestrator
 CMD ["python", "render_app.py"]
