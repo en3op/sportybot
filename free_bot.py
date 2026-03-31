@@ -1116,23 +1116,14 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                     logger.info(f"Pair matched: {team1} vs {team2} -> {display_name}")
 
         # Strategy 2: If no pairs matched, try individual team names
-        if not match_plays and potential_teams:
+        if potential_teams:
             matched_events = _match_teams_to_events(potential_teams, events)
             for display_name, event in matched_events.items():
-                analysis = analyze_all_markets_full(event)
-                plays = analysis.get("plays", [])
-            if plays:
-                match_plays[display_name] = plays
-
-        if not match_plays:
-            team_list = [t for t, _ in match_pairs] if match_pairs else potential_teams[:8]
-            await _safe_edit(progress_msg,
-                f"\u274c Could not match teams to live events.\n\n"
-                f"Extracted: {', '.join(team_list)}\n\n"
-                f"These matches may not be available on SportyBet.\n"
-                f"Try matches that are currently available."
-            )
-            return
+                if display_name not in match_plays:
+                    analysis = analyze_all_markets_full(event)
+                    plays = analysis.get("plays", [])
+                    if plays:
+                        match_plays[display_name] = plays
 
         # Use enhanced analyzer with search and tier classification
         match_info = {}
