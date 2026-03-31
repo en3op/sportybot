@@ -1,10 +1,8 @@
-"""
-VIP Bot Runner for Render.com
-"""
-
+"""VIP Bot Runner for Render.com"""
 import os
 import sys
 import logging
+import asyncio
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -15,19 +13,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def main():
-    import asyncio
-    asyncio.set_event_loop(asyncio.new_event_loop())
-    logger.info("Starting VIP bot...")
-    
+async def async_main():
     from telegram.ext import Application, CommandHandler, MessageHandler, filters
     import bot
-    
+
     token = os.environ.get("VIP_BOT_TOKEN", "8791071506:AAGZv4Y3GWSMQ5mnj_vH2cT3p0BWEpxOOmk")
-    
+
     app = Application.builder().token(token).build()
-    
-    # Add handlers - only functions that exist in bot.py
+
     app.add_handler(CommandHandler("start", bot.cmd_start))
     app.add_handler(CommandHandler("safe", bot.cmd_safe))
     app.add_handler(CommandHandler("optimize", bot.cmd_optimize))
@@ -37,10 +30,16 @@ def main():
     app.add_handler(CommandHandler("listvip", bot.cmd_listvip))
     app.add_handler(CommandHandler("refresh", bot.cmd_refresh))
     app.add_handler(MessageHandler(filters.PHOTO, bot.handle_photo))
-    # Note: handle_message doesn't exist in bot.py, removed
-    
-    logger.info("VIP bot handlers registered, starting polling...")
-    app.run_polling(drop_pending_updates=False, stop_signals=None)
+
+    logger.info("VIP bot handlers registered, initializing...")
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling(drop_pending_updates=False)
+    logger.info("VIP bot polling started!")
+    await asyncio.Event().wait()
+
+def main():
+    asyncio.run(async_main())
 
 if __name__ == "__main__":
     main()
